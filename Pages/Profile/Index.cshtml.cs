@@ -264,5 +264,3 @@ namespace KontrolaNawykow.Pages.Profile
         }
     }
 }
-
-sa
