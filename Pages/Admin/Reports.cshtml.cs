@@ -16,6 +16,16 @@ namespace KontrolaNawykow.Pages.Admin
             _context = context;
         }
 
+        public List<Zgloszenie> reports { get; set; } = new List<Zgloszenie>();
+
+        [BindProperty(SupportsGet = true)]
+        public int page { get; set; } = 0;
+
+        public int pageTotal { get; set; } = 0;
+
+        //[BindProperty(SupportsGet = false)]
+        //public String search;
+
         public async Task<IActionResult> OnGetAsync()
         {
             try
@@ -46,6 +56,8 @@ namespace KontrolaNawykow.Pages.Admin
                 //{
                 //    return RedirectToPage("/Diet/Index");
                 //}
+
+                reports = await _context.Zgloszenia.Take(10).ToListAsync();
 
                 return Page();
             }

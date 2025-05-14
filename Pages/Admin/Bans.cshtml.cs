@@ -16,6 +16,8 @@ namespace KontrolaNawykow.Pages.Admin
             _context = context;
         }
 
+        public List<Blokada> bans {  get; set; } = new List<Blokada>();
+
         public async Task<IActionResult> OnGetAsync()
         {
             try
@@ -46,6 +48,8 @@ namespace KontrolaNawykow.Pages.Admin
                 //{
                 //    return RedirectToPage("/Diet/Index");
                 //}
+
+                bans = await _context.Blokady.Take(10).ToListAsync();
 
                 return Page();
             }

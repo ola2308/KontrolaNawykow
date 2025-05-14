@@ -32,7 +32,31 @@
             <a href="/Admin/Bans">Przeglądaj blokady</a>
         </div>
         <div class="item-container">
-            <h1>Zgłoszenia</h1>
+            <h1>Aktywne zgłoszenia</h1>
+            @if( !Model.reports.Any() )
+            {
+                <p class="alert-info">Brak aktywnych zgłoszeń</p>
+            }
+            @if(Model.reports.Any())
+            {
+                <table class="tab-content">
+                    <tr>
+                        <td>Zgłaszający</td>
+                        <td>Zgłaszany</td>
+                        <td>Data</td>
+                        <td>Akcje</td>
+                    </tr>
+                @foreach (var report in Model.reports)
+                {
+                        <tr>
+                            <td>@report.Zglaszajacy.Username</td>
+                            <td>@report.Zglaszany.Username</td>
+                            <td>@report.Data.ToString()</td>
+                            <td><a>Sprawdź szczegóły</a></td>
+                        </tr>
+                }
+                </table>
+            }
             
         </div>
     </div>

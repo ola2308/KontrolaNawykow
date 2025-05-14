@@ -33,7 +33,32 @@
         </div>
         <div class="item-container">
             <h1>Blokady</h1>
-
+            @if (!Model.bans.Any())
+            {
+                <p class="alert-info">Brak aktywnych zgłoszeń</p>
+            }
+            @if (Model.bans.Any())
+            {
+                <table class="tab-content">
+                    <tr>
+                        <td>Nałożona przez</td>
+                        <td>Zablokowany użytkownik</td>
+                        <td>Początek</td>
+                        <td>Koniec</td>
+                        <td>Akcje</td>
+                    </tr>
+                    @foreach (var ban in Model.bans)
+                    {
+                        <tr>
+                            <td>@ban.Admin.Uzytkownik.Username</td>
+                            <td>@ban.Uzytkownik.Username</td>
+                            <td>@ban.DataPoczatku.ToString()</td>
+                            <td>@ban.DataKonca.ToString()</td>
+                            <td><a>Sprawdź szczegóły</a></td>
+                        </tr>
+                    }
+                </table>
+            }
         </div>
     </div>
 </body>
