@@ -1,0 +1,36 @@
+﻿@page
+@model KontrolaNawykow.Pages.Admin.ReportsModel
+@{
+    ViewData["Title"] = "Panel Administracyjny";
+}
+
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Panel administracyjny - KontrolaNawyków</title>
+    <link rel="stylesheet" href="/css/site.css" asp-append-version="true" />
+    <link href="https://fonts.googleapis.com/css2?family=Purple+Purse&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Charmonman:wght@400;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="main-container">
+        <div class="header-tabs">
+            <div class="tabs-container">
+                <a href="/Diet/Index" class="tab-button">Dieta</a>
+                <a href="/ToDo/Index" class="tab-button active">ToDo</a>
+                <a href="/Admin/Dashboard" class="tab-button active">Admin</a>
+            </div>
+            <div class="profile-button">
+                <a href="/Profile/Index" class="profile-link">Mój profil <img src="~/images/zebatka.png" class="settings-icon" alt="Ustawienia" /></a>
+            </div>
+        </div>
+        <div>
+            <a href="/Admin/Reports" class="active">Przeglądaj zgłoszenia</a>
+            <a href="/Admin/Bans">Przeglądaj blokady</a>
+        </div>
+    </div>
+</body>
+</html>
