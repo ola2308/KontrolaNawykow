@@ -43,13 +43,15 @@ namespace KontrolaNawykow.Pages.Admin
                     return RedirectToPage("/Account/Login");
                 }
 
-                // SprawdŸ, czy u¿ytkownik jest administratorem
-                //if (CurrentUser.Admin == null)
-                //{
-                //    return RedirectToPage("/Diet/Index");
-                //}
+                //SprawdŸ, czy u¿ytkownik jest administratorem
+                var CurrentAdmin = _context.Admins.Where(a => a.UzytkownikId == CurrentUser.Id);
+                if (!CurrentAdmin.Any())
+                {
+                    return RedirectToPage("/Diet/Index");
+                }
 
-                bans = await _context.Blokady.Take(10).ToListAsync();
+                //bans = await _context.Blokady.Take(10).ToListAsync();
+                bans = await _context.Blokady.Include(ban => ban.Admin).Take(10).ToListAsync();
 
                 return Page();
             }
