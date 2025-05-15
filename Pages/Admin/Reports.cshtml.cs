@@ -52,10 +52,11 @@ namespace KontrolaNawykow.Pages.Admin
                 }
 
                 // SprawdŸ, czy u¿ytkownik jest administratorem
-                //if (CurrentUser.Admin == null)
-                //{
-                //    return RedirectToPage("/Diet/Index");
-                //}
+                var CurrentAdmin = _context.Admins.Where(a => a.UzytkownikId == CurrentUser.Id);
+                if (!CurrentAdmin.Any())
+                {
+                    return RedirectToPage("/Diet/Index");
+                }
 
                 reports = await _context.Zgloszenia.Take(10).ToListAsync();
 
