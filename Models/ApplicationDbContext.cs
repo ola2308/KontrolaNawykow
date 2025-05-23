@@ -23,6 +23,8 @@ namespace KontrolaNawykow.Models
         public DbSet<Statystyki> Statystyki { get; set; }
         public DbSet<PlanPosilkowPrzepis> PlanPosilkowPrzepisy { get; set; }
         public DbSet<ListaZakupow> ListyZakupow { get; set; }
+        public DbSet<RecipeRating> RecipeRatings { get; set; }
+        public DbSet<DietetykRating> DietetykRatings { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -56,7 +58,7 @@ namespace KontrolaNawykow.Models
                 .HasOne(mp => mp.Recipe)
                 .WithMany(r => r.MealPlans)
                 .HasForeignKey(mp => mp.RecipeId)
-                .OnDelete(DeleteBehavior.ClientSetNull);
+                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<CustomFood>()
                 .HasOne(cf => cf.User)
@@ -84,7 +86,7 @@ namespace KontrolaNawykow.Models
                 .HasOne(u => u.Dietetyk)
                 .WithMany(d => d.Users)
                 .HasForeignKey(u => u.DietetykId)
-                .OnDelete(DeleteBehavior.SetNull);
+                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<Admin>()
                 .HasOne(a => a.Uzytkownik)
@@ -104,7 +106,6 @@ namespace KontrolaNawykow.Models
                 .HasForeignKey(b => b.UzytkownikId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // ✅ Fix: użycie Restrict zamiast SetNull, aby uniknąć wielu ścieżek kasujących
             modelBuilder.Entity<Zgloszenie>()
                 .HasOne(z => z.Zglaszajacy)
                 .WithMany()
@@ -121,7 +122,7 @@ namespace KontrolaNawykow.Models
                 .HasOne(z => z.Blokada)
                 .WithMany(b => b.Zgloszenia)
                 .HasForeignKey(z => z.IdBlokady)
-                .OnDelete(DeleteBehavior.SetNull);
+                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<NawykWPlanie>()
                 .HasOne(nwp => nwp.Nawyk)
@@ -158,6 +159,65 @@ namespace KontrolaNawykow.Models
                 .WithMany(pp => pp.ListaZakupow)
                 .HasForeignKey(lz => lz.PlanPosilkowId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<RecipeRating>()
+                .HasOne(rr => rr.Recipe)
+                .WithMany(r => r.Ratings)
+                .HasForeignKey(rr => rr.RecipeId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<RecipeRating>()
+                .HasOne(rr => rr.User)
+                .WithMany(u => u.RecipeRatings)
+                .HasForeignKey(rr => rr.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<DietetykRating>()
+                .HasOne(dr => dr.Dietetyk)
+                .WithMany(d => d.Ratings)
+                .HasForeignKey(dr => dr.DietetykId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<DietetykRating>()
+                .HasOne(dr => dr.User)
+                .WithMany(u => u.DietetykRatings)
+                .HasForeignKey(dr => dr.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<RecipeRating>()
+                .HasIndex(rr => new { rr.RecipeId, rr.UserId })
+                .IsUnique();
+
+            modelBuilder.Entity<DietetykRating>()
+                .HasIndex(dr => new { dr.DietetykId, dr.UserId })
+                .IsUnique();
+
+            if (Database.IsSqlite())
+            {
+                modelBuilder.Entity<User>()
+                    .Property(u => u.CreatedAt)
+                    .HasDefaultValueSql("datetime('now')");
+
+                modelBuilder.Entity<ToDo>()
+                    .Property(t => t.CreatedAt)
+                    .HasDefaultValueSql("datetime('now')");
+
+                modelBuilder.Entity<Zgloszenie>()
+                    .Property(z => z.Data)
+                    .HasDefaultValueSql("datetime('now')");
+
+                modelBuilder.Entity<Nawyk>()
+                    .Property(n => n.DataUtworzenia)
+                    .HasDefaultValueSql("datetime('now')");
+
+                modelBuilder.Entity<RecipeRating>()
+                    .Property(rr => rr.CreatedAt)
+                    .HasDefaultValueSql("datetime('now')");
+
+                modelBuilder.Entity<DietetykRating>()
+                    .Property(dr => dr.CreatedAt)
+                    .HasDefaultValueSql("datetime('now')");
+            }
         }
     }
 }

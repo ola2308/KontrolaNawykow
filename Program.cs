@@ -5,19 +5,32 @@ using KontrolaNawykow.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 📌 1️⃣ Dodanie kontekstu bazy danych z logowaniem
+// Dodanie kontekstu bazy danych SQLite
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
     var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
     if (string.IsNullOrEmpty(connectionString))
     {
-        throw new Exception("❌ BŁĄD: Brak ConnectionString w pliku konfiguracji!");
+        throw new Exception("Brak ConnectionString w pliku konfiguracji!");
     }
-    Console.WriteLine($"✅ Połączono z bazą danych: {connectionString}");
-    options.UseSqlServer(connectionString);
+    Console.WriteLine($"Połączono z bazą danych SQLite: {connectionString}");
+    options.UseSqlite(connectionString);
 });
 
-// 📌 2️⃣ Konfiguracja uwierzytelniania cookie
+// Konfiguracja CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowLocalhost",
+        policy =>
+        {
+            policy.WithOrigins("https://localhost:7169", "http://localhost:7169")
+                  .AllowAnyHeader()
+                  .AllowAnyMethod()
+                  .AllowCredentials();
+        });
+});
+
+// Konfiguracja uwierzytelniania cookie
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
@@ -28,62 +41,64 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.Cookie.HttpOnly = true;
         options.ExpireTimeSpan = TimeSpan.FromDays(7);
         options.SlidingExpiration = true;
-        Console.WriteLine("✅ Konfiguracja uwierzytelniania cookie załadowana.");
     });
 
-// 📌 3️⃣ Konfiguracja sesji
+// Konfiguracja sesji
 builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromMinutes(30);
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
-    Console.WriteLine("✅ Sesja została skonfigurowana.");
 });
 
-// 📌 4️⃣ Dodanie MVC i Razor Pages
+// Dodanie MVC i Razor Pages
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
-Console.WriteLine("✅ MVC i Razor Pages załadowane.");
 
 var app = builder.Build();
 
-// 📌 5️⃣ Konfiguracja błędów w trybie produkcyjnym
+// Konfiguracja błędów
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error");
     app.UseHsts();
-    Console.WriteLine("✅ Tryb produkcyjny - używam HSTS.");
 }
 else
 {
-    Console.WriteLine("✅ Tryb deweloperski - HSTS wyłączone.");
+    app.UseDeveloperExceptionPage();
 }
 
-// 📌 6️⃣ Middleware
+// Middleware do logowania żądań API
+app.Use(async (context, next) =>
+{
+    if (context.Request.Path.StartsWithSegments("/api"))
+    {
+        Console.WriteLine($"API Request: {context.Request.Method} {context.Request.Path}");
+    }
+
+    await next();
+
+    if (context.Request.Path.StartsWithSegments("/api"))
+    {
+        Console.WriteLine($"API Response: {context.Response.StatusCode}");
+    }
+});
+
+// Middleware
 app.UseHttpsRedirection();
 app.UseStaticFiles();
+app.UseCors("AllowLocalhost");
 app.UseRouting();
-Console.WriteLine("✅ Middleware został skonfigurowany.");
-
-// Uwierzytelnianie i autoryzacja
 app.UseAuthentication();
 app.UseAuthorization();
-Console.WriteLine("✅ Middleware uwierzytelniania i autoryzacji dodany.");
-
-// Sesja
 app.UseSession();
-Console.WriteLine("✅ Middleware sesji dodany.");
 
-// Najpierw mapuj konkretne trasy do kontrolera
-// Najpierw Razor Pages
-app.MapRazorPages();
-
-// Potem kontrolery MVC
+// Mapowanie tras - KONTROLERY NAJPIERW!
+app.MapControllers(); // Dodaj to
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Account}/{action=Login}/{id?}");
+app.MapRazorPages();
 
-Console.WriteLine("✅ Mapowanie tras zakończone. Aplikacja startuje...");
-
-// Uruchomienie aplikacji
+Console.WriteLine("Aplikacja startuje...");
 app.Run();

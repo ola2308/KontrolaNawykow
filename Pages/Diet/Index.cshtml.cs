@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Mvc;
+ï»¿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using KontrolaNawykow.Models;
 using Microsoft.EntityFrameworkCore;
@@ -50,7 +50,7 @@ namespace KontrolaNawykow.Pages.Diet
         {
             try
             {
-                // Pobierz ID zalogowanego u¿ytkownika
+                // Pobierz ID zalogowanego uÅ¼ytkownika
                 if (!User.Identity.IsAuthenticated)
                 {
                     return RedirectToPage("/Account/Login");
@@ -62,7 +62,7 @@ namespace KontrolaNawykow.Pages.Diet
                     return RedirectToPage("/Account/Login");
                 }
 
-                // Pobierz dane u¿ytkownika
+                // Pobierz dane uÅ¼ytkownika
                 CurrentUser = await _context.Users
                     .FirstOrDefaultAsync(u => u.Id == userId);
 
@@ -71,39 +71,43 @@ namespace KontrolaNawykow.Pages.Diet
                     return RedirectToPage("/Account/Login");
                 }
 
-                // Przygotuj informacje o dniach tygodnia z uwzglêdnieniem offsetu
+                // Przygotuj informacje o dniach tygodnia z uwzglÄ™dnieniem offsetu
                 WeekDays = GetWeekDays(WeekOffset);
 
-                // Pobierz przepisy u¿ytkownika i publiczne
+                // Pobierz przepisy uÅ¼ytkownika i publiczne
                 Recipes = await _context.Recipes
                     .Where(r => r.UserId == userId || r.IsPublic)
                     .Include(r => r.RecipeIngredients)
                         .ThenInclude(ri => ri.Ingredient)
+                    .Include(r => r.Ratings) // Dodaj Å‚adowanie ocen
                     .ToListAsync();
 
-                // Pobierz sk³adniki
+                // Pobierz skÅ‚adniki
                 Ingredients = await _context.Ingredients
                     .OrderBy(i => i.Name)
                     .ToListAsync();
 
-                // Przygotuj daty dla zapytañ
+                // Przygotuj daty dla zapytaÅ„
                 var startDate = WeekDays.First().Date;
                 var endDate = WeekDays.Last().Date.AddDays(1).AddSeconds(-1); // Koniec ostatniego dnia
 
-                // Pobierz plany posi³ków z relacj¹ do przepisów przez tabelê ³¹cz¹c¹
+                // Pobierz plany posiÅ‚kÃ³w z relacjÄ… do przepisÃ³w przez tabelÄ™ Å‚Ä…czÄ…cÄ…
                 var mealPlans = await _context.MealPlans
-                    .Where(mp => mp.UserId == userId &&
-                           mp.Date >= startDate && mp.Date <= endDate)
-                    .Include(mp => mp.PlanPosilkowPrzepisy)
-                        .ThenInclude(ppp => ppp.Przepis)
-                            .ThenInclude(r => r.RecipeIngredients)
-                                .ThenInclude(ri => ri.Ingredient)
-                    .OrderBy(mp => mp.Date)
-                    .ThenBy(mp => mp.MealType)
-                    .ToListAsync();
+                   .Where(mp => mp.UserId == userId &&
+                          mp.Date >= startDate && mp.Date <= endDate)
+                   .Include(mp => mp.PlanPosilkowPrzepisy)
+                       .ThenInclude(ppp => ppp.Przepis)
+                           .ThenInclude(r => r.RecipeIngredients)
+                               .ThenInclude(ri => ri.Ingredient)
+                   .Include(mp => mp.PlanPosilkowPrzepisy)
+                       .ThenInclude(ppp => ppp.Przepis)
+                           .ThenInclude(r => r.Ratings) // Dodaj Å‚adowanie ocen przepisÃ³w
+                   .OrderBy(mp => mp.Date)
+                   .ThenBy(mp => mp.MealType)
+                   .ToListAsync();
 
-                // Przekszta³æ plany posi³ków do modelu widoku, który zachowuje kompatybilnoœæ
-                // z poprzedni¹ struktur¹ dla szablonu
+                // PrzeksztaÅ‚Ä‡ plany posiÅ‚kÃ³w do modelu widoku, ktÃ³ry zachowuje kompatybilnoÅ›Ä‡
+                // z poprzedniÄ… strukturÄ… dla szablonu
                 foreach (var mealPlan in mealPlans)
                 {
                     if (mealPlan.Date.HasValue)
@@ -125,7 +129,7 @@ namespace KontrolaNawykow.Pages.Diet
                             Eaten = mealPlan.Eaten
                         };
 
-                        // Przypisanie przepisu z relacji, jeœli istnieje
+                        // Przypisanie przepisu z relacji, jeÅ›li istnieje
                         var planPosilkowPrzepis = mealPlan.PlanPosilkowPrzepisy?.FirstOrDefault();
                         if (planPosilkowPrzepis != null)
                         {
@@ -141,27 +145,27 @@ namespace KontrolaNawykow.Pages.Diet
             }
             catch (Exception ex)
             {
-                // Logowanie b³êdu
-                Console.WriteLine($"B³¹d podczas ³adowania strony diety: {ex.Message}");
+                // Logowanie bÅ‚Ä™du
+                Console.WriteLine($"BÅ‚Ä…d podczas Å‚adowania strony diety: {ex.Message}");
                 return RedirectToPage("/Error", new { message = ex.Message });
             }
         }
 
-        // Metoda zwracaj¹ca informacje o dniach tygodnia (poniedzia³ek-niedziela) z uwzglêdnieniem offsetu
+        // Metoda zwracajÄ…ca informacje o dniach tygodnia (poniedziaÅ‚ek-niedziela) z uwzglÄ™dnieniem offsetu
         private List<DayInfo> GetWeekDays(int weekOffset = 0)
         {
             var days = new List<DayInfo>();
             var today = DateTime.Today;
 
-            // ZnajdŸ poniedzia³ek bie¿¹cego tygodnia
+            // ZnajdÅº poniedziaÅ‚ek bieÅ¼Ä…cego tygodnia
             var monday = today.AddDays(-(int)today.DayOfWeek + (int)DayOfWeek.Monday);
             if (today.DayOfWeek == DayOfWeek.Sunday)
-                monday = monday.AddDays(-7); // Jeœli dziœ niedziela, cofnij do poprzedniego poniedzia³ku
+                monday = monday.AddDays(-7); // JeÅ›li dziÅ› niedziela, cofnij do poprzedniego poniedziaÅ‚ku
 
             // Zastosuj offset tygodniowy
             monday = monday.AddDays(weekOffset * 7);
 
-            // Dodaj 7 dni od poniedzia³ku
+            // Dodaj 7 dni od poniedziaÅ‚ku
             for (int i = 0; i < 7; i++)
             {
                 var date = monday.AddDays(i);
@@ -176,23 +180,23 @@ namespace KontrolaNawykow.Pages.Diet
             return days;
         }
 
-        // Metoda zwracaj¹ca polskie nazwy dni tygodnia
+        // Metoda zwracajÄ…ca polskie nazwy dni tygodnia
         private string GetPolishDayName(DayOfWeek dayOfWeek)
         {
             switch (dayOfWeek)
             {
-                case DayOfWeek.Monday: return "Poniedzia³ek";
+                case DayOfWeek.Monday: return "PoniedziaÅ‚ek";
                 case DayOfWeek.Tuesday: return "Wtorek";
-                case DayOfWeek.Wednesday: return "Œroda";
+                case DayOfWeek.Wednesday: return "Åšroda";
                 case DayOfWeek.Thursday: return "Czwartek";
-                case DayOfWeek.Friday: return "Pi¹tek";
+                case DayOfWeek.Friday: return "PiÄ…tek";
                 case DayOfWeek.Saturday: return "Sobota";
                 case DayOfWeek.Sunday: return "Niedziela";
                 default: return string.Empty;
             }
         }
 
-        // Metoda obliczaj¹ca ca³kowit¹ wartoœæ od¿ywcz¹ posi³ków dla danego dnia
+        // Metoda obliczajÄ…ca caÅ‚kowitÄ… wartoÅ›Ä‡ odÅ¼ywczÄ… posiÅ‚kÃ³w dla danego dnia
         public DailyTotals GetDailyTotals(DateTime date)
         {
             var totals = new DailyTotals();
@@ -210,14 +214,14 @@ namespace KontrolaNawykow.Pages.Diet
                     }
                     else
                     {
-                        // Próba analizy zawartoœci CustomEntry, jeœli istnieje
-                        // Np. jeœli zawiera informacje o makrosk³adnikach
-                        // To logika, któr¹ mo¿esz zaimplementowaæ w przysz³oœci
+                        // PrÃ³ba analizy zawartoÅ›ci CustomEntry, jeÅ›li istnieje
+                        // Np. jeÅ›li zawiera informacje o makroskÅ‚adnikach
+                        // To logika, ktÃ³rÄ… moÅ¼esz zaimplementowaÄ‡ w przyszÅ‚oÅ›ci
                     }
                 }
             }
 
-            // Zaokr¹glanie wartoœci dla lepszej czytelnoœci
+            // ZaokrÄ…glanie wartoÅ›ci dla lepszej czytelnoÅ›ci
             totals.Protein = (float)Math.Round(totals.Protein, 1);
             totals.Fat = (float)Math.Round(totals.Fat, 1);
             totals.Carbs = (float)Math.Round(totals.Carbs, 1);
@@ -225,14 +229,14 @@ namespace KontrolaNawykow.Pages.Diet
             return totals;
         }
 
-        // Metoda pomocnicza do debugowania - zwraca dostêpne sk³adniki dla przepisu
+        // Metoda pomocnicza do debugowania - zwraca dostÄ™pne skÅ‚adniki dla przepisu
         public List<RecipeIngredient> GetIngredients(int recipeId)
         {
             var recipe = Recipes.FirstOrDefault(r => r.Id == recipeId);
             return recipe?.RecipeIngredients?.ToList() ?? new List<RecipeIngredient>();
         }
 
-        // Pomocnicza metoda do pobierania zjedzone/niezjedzone posi³ki na dany dzieñ
+        // Pomocnicza metoda do pobierania zjedzone/niezjedzone posiÅ‚ki na dany dzieÅ„
         public List<MealPlanViewModel> GetMealsByStatus(DateTime date, bool eaten)
         {
             if (MealPlans.ContainsKey(date))
@@ -242,43 +246,69 @@ namespace KontrolaNawykow.Pages.Diet
             return new List<MealPlanViewModel>();
         }
 
-        // Metoda zwracaj¹ca kalorie dla aktualnego u¿ytkownika (mo¿na dodaæ kalkulacje na podstawie wagi, wzrostu, aktywnoœci)
+        // Metoda zwracajÄ…ca kalorie dla aktualnego uÅ¼ytkownika (moÅ¼na dodaÄ‡ kalkulacje na podstawie wagi, wzrostu, aktywnoÅ›ci)
         public int GetRecommendedCalories()
         {
             if (CurrentUser == null)
-                return 2000; // Domyœlna wartoœæ
+                return 2000; // DomyÅ›lna wartoÅ›Ä‡
 
-            // Tutaj mo¿esz dodaæ bardziej zaawansowan¹ logikê na podstawie profilu u¿ytkownika
-            // Np. wykorzystuj¹c Harris-Benedict lub inne równania dla BMR i TDEE
+            // Tutaj moÅ¼esz dodaÄ‡ bardziej zaawansowanÄ… logikÄ™ na podstawie profilu uÅ¼ytkownika
+            // Np. wykorzystujÄ…c Harris-Benedict lub inne rÃ³wnania dla BMR i TDEE
 
             if (CurrentUser.Plec == Gender.Mezczyzna)
             {
-                return 2500; // Przyk³adowa wartoœæ dla mê¿czyzny
+                return 2500; // PrzykÅ‚adowa wartoÅ›Ä‡ dla mÄ™Å¼czyzny
             }
             else if (CurrentUser.Plec == Gender.Kobieta)
             {
-                return 2000; // Przyk³adowa wartoœæ dla kobiety
+                return 2000; // PrzykÅ‚adowa wartoÅ›Ä‡ dla kobiety
             }
 
-            return 2200; // Domyœlna wartoœæ, jeœli p³eæ nie jest okreœlona
+            return 2200; // DomyÅ›lna wartoÅ›Ä‡, jeÅ›li pÅ‚eÄ‡ nie jest okreÅ›lona
         }
 
-        // Metoda do sprawdzania czy u¿ytkownik ukoñczy³ swoje cele ¿ywieniowe na dany dzieñ
+        // Metoda do sprawdzania czy uÅ¼ytkownik ukoÅ„czyÅ‚ swoje cele Å¼ywieniowe na dany dzieÅ„
         public bool IsNutritionGoalCompleted(DateTime date)
         {
             var totals = GetDailyTotals(date);
             var recommendedCalories = GetRecommendedCalories();
 
-            // Przyk³adowa logika - uznajemy cel za ukoñczony, jeœli spo¿ycie kalorii 
-            // mieœci siê w zakresie 90-110% zalecanego poziomu
+            // PrzykÅ‚adowa logika - uznajemy cel za ukoÅ„czony, jeÅ›li spoÅ¼ycie kalorii 
+            // mieÅ›ci siÄ™ w zakresie 90-110% zalecanego poziomu
             var minCalories = recommendedCalories * 0.9;
             var maxCalories = recommendedCalories * 1.1;
 
             return totals.Calories >= minCalories && totals.Calories <= maxCalories;
         }
+
+        // Funkcja generujÄ…ca HTML z gwiazdkami dla ocen
+        public string GetStarsHtml(double rating)
+        {
+            int fullStars = (int)Math.Floor(rating);
+            bool hasHalfStar = rating % 1 >= 0.5;
+            string starsHtml = "";
+
+            for (int i = 1; i <= 5; i++)
+            {
+                if (i <= fullStars)
+                {
+                    starsHtml += "â˜…";  // PeÅ‚na gwiazdka
+                }
+                else if (i == fullStars + 1 && hasHalfStar)
+                {
+                    starsHtml += "â˜†";  // PÃ³Å‚ gwiazdki (moÅ¼na uÅ¼yÄ‡ Â½ lub specjalnego znaku)
+                }
+                else
+                {
+                    starsHtml += "â˜†";  // Pusta gwiazdka
+                }
+            }
+
+            return starsHtml;
+        }
     }
 
-    // Model widoku dla kompatybilnoœci z widokiem
+    // Model widoku dla kompatybilnoÅ›ci z widokiem
     public class MealPlanViewModel
     {
         public int Id { get; set; }

@@ -106,21 +106,26 @@ namespace KontrolaNawykow.Controllers
         [HttpPost]
         public async Task<ActionResult<MealPlanViewModel>> PostMealPlan([FromBody] MealPlanDto mealPlanDto)
         {
+            Console.WriteLine("PostMealPlan rozpoczęty");
+
             try
             {
                 if (mealPlanDto == null)
                 {
+                    Console.WriteLine("Brak danych posiłku");
                     return BadRequest("Brak danych posiłku");
                 }
 
-                var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+                Console.WriteLine($"Otrzymane dane: Date={mealPlanDto.Date}, MealType={mealPlanDto.MealType}, RecipeId={mealPlanDto.RecipeId}");
 
-                // Begin transaction
+                var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+                Console.WriteLine($"User ID: {userId}");
+
                 using var transaction = await _context.Database.BeginTransactionAsync();
+                Console.WriteLine("Transakcja rozpoczęta");
 
                 try
                 {
-                    // Create the meal plan
                     var mealPlan = new MealPlan
                     {
                         UserId = userId,
@@ -131,12 +136,18 @@ namespace KontrolaNawykow.Controllers
                         CustomEntry = mealPlanDto.CustomEntry ?? string.Empty
                     };
 
+                    Console.WriteLine($"Utworzono obiekt MealPlan: ID={mealPlan.Id}");
+
                     _context.MealPlans.Add(mealPlan);
                     await _context.SaveChangesAsync();
+
+                    Console.WriteLine($"Zapisano MealPlan do bazy, nowe ID: {mealPlan.Id}");
 
                     // If a recipe is selected, add it to the join table (nowy sposób)
                     if (mealPlanDto.RecipeId.HasValue)
                     {
+                        Console.WriteLine($"Dodaję relację do tabeli łączącej: PlanID={mealPlan.Id}, RecipeID={mealPlanDto.RecipeId.Value}");
+
                         var planPosilkowPrzepis = new PlanPosilkowPrzepis
                         {
                             PlanPosilkowId = mealPlan.Id,
@@ -145,9 +156,12 @@ namespace KontrolaNawykow.Controllers
 
                         _context.PlanPosilkowPrzepisy.Add(planPosilkowPrzepis);
                         await _context.SaveChangesAsync();
+
+                        Console.WriteLine("Relacja zapisana w tabeli łączącej");
                     }
 
                     await transaction.CommitAsync();
+                    Console.WriteLine("Transakcja zatwierdzona");
 
                     // Reload the meal plan with its recipe
                     var savedMealPlan = await _context.MealPlans
@@ -155,6 +169,8 @@ namespace KontrolaNawykow.Controllers
                         .Include(mp => mp.PlanPosilkowPrzepisy)
                             .ThenInclude(ppp => ppp.Przepis)
                         .FirstOrDefaultAsync(mp => mp.Id == mealPlan.Id);
+
+                    Console.WriteLine($"Przeładowano MealPlan z relacjami");
 
                     // Convert to view model
                     var mealPlanViewModel = new MealPlanViewModel
@@ -169,16 +185,21 @@ namespace KontrolaNawykow.Controllers
                         RecipeId = savedMealPlan.RecipeId ?? savedMealPlan.PlanPosilkowPrzepisy.FirstOrDefault()?.PrzepisId
                     };
 
+                    Console.WriteLine($"PostMealPlan zakończony sukcesem, zwracam MealPlan ID: {mealPlanViewModel.Id}");
+
                     return CreatedAtAction(nameof(GetMealPlan), new { id = mealPlan.Id }, mealPlanViewModel);
                 }
-                catch (Exception)
+                catch (Exception innerEx)
                 {
+                    Console.WriteLine($"Błąd w transakcji: {innerEx.Message}");
                     await transaction.RollbackAsync();
                     throw;
                 }
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"Błąd w PostMealPlan: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
                 return StatusCode(500, $"Błąd podczas dodawania posiłku: {ex.Message}");
             }
         }

@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using System.Linq;
 using System;
 using System.Text.Json;
+using System.ComponentModel.DataAnnotations;
 
 namespace KontrolaNawykow.Controllers
 {
@@ -48,23 +49,32 @@ namespace KontrolaNawykow.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<Recipe>> GetRecipe(int id)
         {
+            Console.WriteLine($"GetRecipe wywołana z ID: {id}");
+
             try
             {
                 var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+                Console.WriteLine($"User ID: {userId}");
+
                 var recipe = await _context.Recipes
                     .Include(r => r.RecipeIngredients)
                         .ThenInclude(ri => ri.Ingredient)
+                    .Include(r => r.Ratings) // Dodaj oceny
                     .FirstOrDefaultAsync(r => r.Id == id && (r.UserId == userId || r.IsPublic));
 
                 if (recipe == null)
                 {
+                    Console.WriteLine($"Nie znaleziono przepisu o ID {id} dla użytkownika {userId}");
                     return NotFound($"Nie znaleziono przepisu o ID {id}");
                 }
 
-                return recipe;
+                Console.WriteLine($"Znaleziono przepis: {recipe.Name}, składniki: {recipe.RecipeIngredients?.Count ?? 0}, oceny: {recipe.Ratings?.Count ?? 0}");
+
+                return Ok(recipe);
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"Błąd w GetRecipe: {ex.Message}");
                 return StatusCode(500, $"Błąd podczas pobierania przepisu: {ex.Message}");
             }
         }
@@ -371,12 +381,120 @@ namespace KontrolaNawykow.Controllers
             }
         }
 
+        // POST: api/recipe/5/rate
+        [HttpPost("{id}/rate")]
+        public async Task<IActionResult> RateRecipe(int id, [FromBody] RecipeRatingDto ratingDto)
+        {
+            Console.WriteLine($"RateRecipe wywołana dla przepisu ID: {id}, ocena: {ratingDto.Rating}");
+
+            try
+            {
+                var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+
+                // Sprawdź czy przepis istnieje i użytkownik ma do niego dostęp
+                var recipe = await _context.Recipes
+                    .FirstOrDefaultAsync(r => r.Id == id && (r.UserId == userId || r.IsPublic));
+
+                if (recipe == null)
+                {
+                    return NotFound("Nie znaleziono przepisu");
+                }
+
+                // Sprawdź czy użytkownik już ocenił ten przepis
+                var existingRating = await _context.RecipeRatings
+                    .FirstOrDefaultAsync(rr => rr.RecipeId == id && rr.UserId == userId);
+
+                if (existingRating != null)
+                {
+                    // Aktualizuj istniejącą ocenę
+                    existingRating.Rating = ratingDto.Rating;
+                    existingRating.Comment = ratingDto.Comment;
+                    Console.WriteLine($"Aktualizacja istniejącej oceny dla użytkownika {userId}");
+                }
+                else
+                {
+                    // Dodaj nową ocenę
+                    var newRating = new RecipeRating
+                    {
+                        RecipeId = id,
+                        UserId = userId,
+                        Rating = ratingDto.Rating,
+                        Comment = ratingDto.Comment,
+                        CreatedAt = DateTime.UtcNow
+                    };
+
+                    _context.RecipeRatings.Add(newRating);
+                    Console.WriteLine($"Dodano nową ocenę dla użytkownika {userId}");
+                }
+
+                await _context.SaveChangesAsync();
+
+                // Pobierz zaktualizowane statystyki
+                var avgRating = await _context.RecipeRatings
+                    .Where(rr => rr.RecipeId == id)
+                    .AverageAsync(rr => (double)rr.Rating);
+
+                var ratingCount = await _context.RecipeRatings
+                    .CountAsync(rr => rr.RecipeId == id);
+
+                Console.WriteLine($"Ocena zapisana. Średnia: {avgRating:F1}, Liczba ocen: {ratingCount}");
+
+                return Ok(new
+                {
+                    message = "Ocena zapisana",
+                    averageRating = Math.Round(avgRating, 1),
+                    ratingCount = ratingCount
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Błąd podczas oceniania przepisu: {ex.Message}");
+                return StatusCode(500, $"Błąd podczas zapisywania oceny: {ex.Message}");
+            }
+        }
+
+        // GET: api/recipe/5/rating
+        [HttpGet("{id}/rating")]
+        public async Task<IActionResult> GetRecipeRating(int id)
+        {
+            try
+            {
+                var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+
+                // Pobierz ocenę użytkownika dla tego przepisu
+                var userRating = await _context.RecipeRatings
+                    .FirstOrDefaultAsync(rr => rr.RecipeId == id && rr.UserId == userId);
+
+                // Pobierz statystyki przepisu
+                var ratings = await _context.RecipeRatings
+                    .Where(rr => rr.RecipeId == id)
+                    .ToListAsync();
+
+                var averageRating = ratings.Any() ? ratings.Average(r => r.Rating) : 0;
+                var ratingCount = ratings.Count;
+
+                return Ok(new
+                {
+                    userRating = userRating?.Rating,
+                    userComment = userRating?.Comment,
+                    averageRating = Math.Round(averageRating, 1),
+                    ratingCount = ratingCount
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Błąd podczas pobierania oceny: {ex.Message}");
+                return StatusCode(500, $"Błąd podczas pobierania oceny: {ex.Message}");
+            }
+        }
+
         private bool RecipeExists(int id)
         {
             return _context.Recipes.Any(e => e.Id == id);
         }
     }
 
+    // DTO klasy - muszą być poza klasą kontrolera
     public class RecipeDto
     {
         public string Name { get; set; }
@@ -393,5 +511,15 @@ namespace KontrolaNawykow.Controllers
     {
         public int IngredientId { get; set; }
         public float Amount { get; set; }
+    }
+
+    // DTO dla oceny
+    public class RecipeRatingDto
+    {
+        [Range(1, 5, ErrorMessage = "Ocena musi być między 1 a 5")]
+        public int Rating { get; set; }
+
+        [MaxLength(500)]
+        public string Comment { get; set; }
     }
 }

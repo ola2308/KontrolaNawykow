@@ -2159,7 +2159,8 @@
         }
 
          // Funkcja zapisywania posiłku do jadłospisu
-        function saveMeal() {
+        // Funkcja zapisywania posiłku do jadłospisu
+        async function saveMeal() {
             try {
                 // Zbierz podstawowe dane
                 const mealDate = document.getElementById('mealDate').value;
@@ -2207,7 +2208,7 @@
                     } else {
                         mealPlanDto.CustomEntry = `Przepis ID: ${recipeId}`;
                     }
-                } 
+                }
                 // Jeśli wybrano składnik
                 else if (selectedIngredientId) {
                     mealPlanDto.RecipeId = null;
@@ -2232,38 +2233,90 @@
                 saveButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Zapisywanie...';
                 saveButton.disabled = true;
 
+                // Dodaj timeout dla żądania
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 sekund timeout
+
                 // Wyślij żądanie do API
-                fetch(url, {
+                const response = await fetch(url, {
                     method: method,
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
                     },
-                    body: JSON.stringify(mealPlanDto)
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        return response.text().then(text => {
-                            throw new Error('Błąd podczas zapisywania posiłku: ' + text);
-                        });
+                    body: JSON.stringify(mealPlanDto),
+                    signal: controller.signal
+                });
+
+                clearTimeout(timeoutId);
+
+                console.log('Odpowiedź serwera:', response.status, response.statusText);
+
+                if (response.ok) {
+                    console.log('Posiłek zapisany pomyślnie');
+
+                    let responseData = null;
+                    try {
+                        const responseText = await response.text();
+                        if (responseText) {
+                            responseData = JSON.parse(responseText);
+                        }
+                    } catch (jsonError) {
+                        console.log('Brak odpowiedzi JSON lub błąd parsowania, ale operacja zakończona sukcesem');
                     }
-                    return response.json();
-                })
-                .then(data => {
-                    console.log('Posiłek zapisany pomyślnie:', data);
+
+                    console.log('Dane odpowiedzi:', responseData);
+
                     closeModal('addMealModal');
-                    location.reload(); // Odśwież stronę, aby zobaczyć zmiany
-                })
-                .catch(error => {
-                    console.error('Błąd:', error);
-                    alert(error.message);
-            
-                    // Przywróć stan przycisku
+
+                    setTimeout(() => {
+                        location.reload();
+                    }, 500);
+
+                } else {
+                    let errorMessage = `Błąd HTTP: ${response.status} ${response.statusText}`;
+
+                    try {
+                        const errorText = await response.text();
+                        if (errorText) {
+                            errorMessage += `\n\nSzczegóły: ${errorText}`;
+                        }
+                    } catch (errorReadingError) {
+                        console.error('Błąd podczas czytania odpowiedzi błędu:', errorReadingError);
+                    }
+
+                    console.error('Błąd serwera:', errorMessage);
+                    alert(errorMessage);
+
                     saveButton.innerHTML = originalText;
                     saveButton.disabled = false;
-                });
+                }
+
             } catch (error) {
                 console.error('Wystąpił błąd:', error);
-                alert('Wystąpił błąd podczas zapisywania posiłku: ' + error.message);
+
+                let errorMessage = 'Wystąpił błąd podczas zapisywania posiłku';
+
+                if (error.name === 'AbortError') {
+                    errorMessage = 'Upłynął czas oczekiwania na odpowiedź serwera. Spróbuj ponownie.';
+                } else if (error.message) {
+                    errorMessage += ': ' + error.message;
+                }
+
+                alert(errorMessage);
+
+                const saveButton = document.getElementById('saveMealBtn');
+                if (saveButton) {
+                    saveButton.innerHTML = 'Zapisz';
+                    saveButton.disabled = false;
+                }
+
+                console.log('Sprawdzam czy posiłek został zapisany mimo błędu...');
+                setTimeout(() => {
+                    if (confirm('Wystąpił błąd, ale posiłek mógł się zapisać. Czy chcesz odświeżyć stronę?')) {
+                        location.reload();
+                    }
+                }, 2000);
             }
         }
         // Funkcja testująca połączenie z API

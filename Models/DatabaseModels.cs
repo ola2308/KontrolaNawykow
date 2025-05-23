@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
 
 namespace KontrolaNawykow.Models
 {
@@ -51,6 +52,10 @@ namespace KontrolaNawykow.Models
         public List<Statystyki> Statystyki { get; set; }
         public List<NawykWPlanie> NawykiWPlanie { get; set; }
         public Admin Admin { get; set; }
+
+        // NOWE: Relacje do ocen
+        public List<RecipeRating> RecipeRatings { get; set; }
+        public List<DietetykRating> DietetykRatings { get; set; }
     }
 
     public enum Gender
@@ -87,12 +92,18 @@ namespace KontrolaNawykow.Models
         public bool IsPublic { get; set; }
 
         public List<RecipeIngredient> RecipeIngredients { get; set; }
-
-        // Stara relacja (dla kompatybilności z istniejącym kodem)
         public List<MealPlan> MealPlans { get; set; }
-
-        // Nowa relacja przez tabelę łączącą
         public List<PlanPosilkowPrzepis> PlanPosilkowPrzepisy { get; set; }
+
+        // NOWE: Relacja do ocen
+        public List<RecipeRating> Ratings { get; set; }
+
+        // NOWE: Właściwości obliczeniowe dla ocen
+        [NotMapped]
+        public double AverageRating => Ratings?.Any() == true ? Ratings.Average(r => r.Rating) : 0;
+
+        [NotMapped]
+        public int RatingCount => Ratings?.Count ?? 0;
     }
 
     public class RecipeIngredient
@@ -139,7 +150,6 @@ namespace KontrolaNawykow.Models
         public MealType MealType { get; set; }
         public DateTime? Date { get; set; }
 
-        // Stara relacja (dla kompatybilności z istniejącym kodem)
         public int? RecipeId { get; set; }
         [ForeignKey("RecipeId")]
         public Recipe Recipe { get; set; }
@@ -147,7 +157,6 @@ namespace KontrolaNawykow.Models
         public string CustomEntry { get; set; }
         public bool Eaten { get; set; }
 
-        // Nowa relacja przez tabelę łączącą
         public List<PlanPosilkowPrzepis> PlanPosilkowPrzepisy { get; set; }
         public List<ListaZakupow> ListaZakupow { get; set; }
     }
@@ -233,7 +242,6 @@ namespace KontrolaNawykow.Models
         public bool IsTemplate { get; set; } = false;
     }
 
-    // Nowe klasy
     public class Dietetyk
     {
         [Key]
@@ -247,6 +255,16 @@ namespace KontrolaNawykow.Models
         public string Telefon { get; set; }
 
         public List<User> Users { get; set; }
+
+        // NOWE: Relacja do ocen
+        public List<DietetykRating> Ratings { get; set; }
+
+        // NOWE: Właściwości obliczeniowe dla ocen
+        [NotMapped]
+        public double AverageRating => Ratings?.Any() == true ? Ratings.Average(r => r.Rating) : 0;
+
+        [NotMapped]
+        public int RatingCount => Ratings?.Count ?? 0;
     }
 
     public class Admin
@@ -383,5 +401,50 @@ namespace KontrolaNawykow.Models
         public int TotalMealPlans { get; set; }
         public int CompletedTasks { get; set; }
         public int PendingTasks { get; set; }
+    }
+
+    // NOWE: Klasy dla systemu ocen
+    public class RecipeRating
+    {
+        [Key]
+        public int Id { get; set; }
+
+        public int RecipeId { get; set; }
+        [ForeignKey("RecipeId")]
+        public Recipe Recipe { get; set; }
+
+        public int UserId { get; set; }
+        [ForeignKey("UserId")]
+        public User User { get; set; }
+
+        [Range(1, 5, ErrorMessage = "Ocena musi być między 1 a 5")]
+        public int Rating { get; set; }
+
+        [MaxLength(500)]
+        public string Comment { get; set; }
+
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    }
+
+    public class DietetykRating
+    {
+        [Key]
+        public int Id { get; set; }
+
+        public int DietetykId { get; set; }
+        [ForeignKey("DietetykId")]
+        public Dietetyk Dietetyk { get; set; }
+
+        public int UserId { get; set; }
+        [ForeignKey("UserId")]
+        public User User { get; set; }
+
+        [Range(1, 5, ErrorMessage = "Ocena musi być między 1 a 5")]
+        public int Rating { get; set; }
+
+        [MaxLength(500)]
+        public string Comment { get; set; }
+
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 }

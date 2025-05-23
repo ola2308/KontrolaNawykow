@@ -15,14 +15,14 @@ namespace KontrolaNawykow.Migrations
                 name: "Dietetycy",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Imie = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Nazwisko = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Email = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Zdjecie = table.Column<byte[]>(type: "varbinary(max)", nullable: false),
-                    Specjalizacja = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Telefon = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    Imie = table.Column<string>(type: "TEXT", nullable: false),
+                    Nazwisko = table.Column<string>(type: "TEXT", nullable: false),
+                    Email = table.Column<string>(type: "TEXT", nullable: false),
+                    Zdjecie = table.Column<byte[]>(type: "BLOB", nullable: false),
+                    Specjalizacja = table.Column<string>(type: "TEXT", nullable: false),
+                    Telefon = table.Column<string>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -33,13 +33,13 @@ namespace KontrolaNawykow.Migrations
                 name: "Ingredients",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Calories = table.Column<int>(type: "int", nullable: false),
-                    Protein = table.Column<float>(type: "real", nullable: false),
-                    Fat = table.Column<float>(type: "real", nullable: false),
-                    Carbs = table.Column<float>(type: "real", nullable: false)
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    Name = table.Column<string>(type: "TEXT", nullable: false),
+                    Calories = table.Column<int>(type: "INTEGER", nullable: false),
+                    Protein = table.Column<float>(type: "REAL", nullable: false),
+                    Fat = table.Column<float>(type: "REAL", nullable: false),
+                    Carbs = table.Column<float>(type: "REAL", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -50,12 +50,12 @@ namespace KontrolaNawykow.Migrations
                 name: "Nawyki",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Nazwa = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Cykliczny = table.Column<bool>(type: "bit", nullable: false),
-                    Wykonany = table.Column<bool>(type: "bit", nullable: false),
-                    DataUtworzenia = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    Nazwa = table.Column<string>(type: "TEXT", nullable: false),
+                    Cykliczny = table.Column<bool>(type: "INTEGER", nullable: false),
+                    Wykonany = table.Column<bool>(type: "INTEGER", nullable: false),
+                    DataUtworzenia = table.Column<DateTime>(type: "TEXT", nullable: false, defaultValueSql: "datetime('now')")
                 },
                 constraints: table =>
                 {
@@ -66,25 +66,25 @@ namespace KontrolaNawykow.Migrations
                 name: "Users",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Username = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    Email = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    PasswordHash = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    Plec = table.Column<int>(type: "int", nullable: true),
-                    Wiek = table.Column<int>(type: "int", nullable: true),
-                    Waga = table.Column<double>(type: "float", nullable: true),
-                    Wzrost = table.Column<double>(type: "float", nullable: true),
-                    AktywnoscFizyczna = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
-                    RodzajPracy = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
-                    Cel = table.Column<int>(type: "int", nullable: true),
-                    CustomBmi = table.Column<double>(type: "float", nullable: true),
-                    CustomCaloriesDeficit = table.Column<int>(type: "int", nullable: true),
-                    CustomProteinGrams = table.Column<int>(type: "int", nullable: true),
-                    CustomCarbsGrams = table.Column<int>(type: "int", nullable: true),
-                    CustomFatGrams = table.Column<int>(type: "int", nullable: true),
-                    DietetykId = table.Column<int>(type: "int", nullable: true)
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    Username = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
+                    Email = table.Column<string>(type: "TEXT", nullable: false),
+                    PasswordHash = table.Column<string>(type: "TEXT", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: true, defaultValueSql: "datetime('now')"),
+                    Plec = table.Column<int>(type: "INTEGER", nullable: true),
+                    Wiek = table.Column<int>(type: "INTEGER", nullable: true),
+                    Waga = table.Column<double>(type: "REAL", nullable: true),
+                    Wzrost = table.Column<double>(type: "REAL", nullable: true),
+                    AktywnoscFizyczna = table.Column<string>(type: "TEXT", maxLength: 50, nullable: true),
+                    RodzajPracy = table.Column<string>(type: "TEXT", maxLength: 50, nullable: true),
+                    Cel = table.Column<int>(type: "INTEGER", nullable: true),
+                    CustomBmi = table.Column<double>(type: "REAL", nullable: true),
+                    CustomCaloriesDeficit = table.Column<int>(type: "INTEGER", nullable: true),
+                    CustomProteinGrams = table.Column<int>(type: "INTEGER", nullable: true),
+                    CustomCarbsGrams = table.Column<int>(type: "INTEGER", nullable: true),
+                    CustomFatGrams = table.Column<int>(type: "INTEGER", nullable: true),
+                    DietetykId = table.Column<int>(type: "INTEGER", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -94,16 +94,16 @@ namespace KontrolaNawykow.Migrations
                         column: x => x.DietetykId,
                         principalTable: "Dietetycy",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.SetNull);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
                 name: "Admins",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    UzytkownikId = table.Column<int>(type: "int", nullable: false)
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    UzytkownikId = table.Column<int>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -120,14 +120,14 @@ namespace KontrolaNawykow.Migrations
                 name: "CustomFoods",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    UserId = table.Column<int>(type: "int", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Calories = table.Column<int>(type: "int", nullable: false),
-                    Protein = table.Column<float>(type: "real", nullable: false),
-                    Fat = table.Column<float>(type: "real", nullable: false),
-                    Carbs = table.Column<float>(type: "real", nullable: false)
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    UserId = table.Column<int>(type: "INTEGER", nullable: false),
+                    Name = table.Column<string>(type: "TEXT", nullable: false),
+                    Calories = table.Column<int>(type: "INTEGER", nullable: false),
+                    Protein = table.Column<float>(type: "REAL", nullable: false),
+                    Fat = table.Column<float>(type: "REAL", nullable: false),
+                    Carbs = table.Column<float>(type: "REAL", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -141,14 +141,43 @@ namespace KontrolaNawykow.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "DietetykRatings",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    DietetykId = table.Column<int>(type: "INTEGER", nullable: false),
+                    UserId = table.Column<int>(type: "INTEGER", nullable: false),
+                    Rating = table.Column<int>(type: "INTEGER", nullable: false),
+                    Comment = table.Column<string>(type: "TEXT", maxLength: 500, nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false, defaultValueSql: "datetime('now')")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_DietetykRatings", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_DietetykRatings_Dietetycy_DietetykId",
+                        column: x => x.DietetykId,
+                        principalTable: "Dietetycy",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_DietetykRatings_Users_UserId",
+                        column: x => x.UserId,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "NawykiWPlanie",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    NawykId = table.Column<int>(type: "int", nullable: false),
-                    Dzien = table.Column<int>(type: "int", nullable: false),
-                    UzytkownikId = table.Column<int>(type: "int", nullable: false)
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    NawykId = table.Column<int>(type: "INTEGER", nullable: false),
+                    Dzien = table.Column<int>(type: "INTEGER", nullable: false),
+                    UzytkownikId = table.Column<int>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -171,17 +200,17 @@ namespace KontrolaNawykow.Migrations
                 name: "Recipes",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Calories = table.Column<int>(type: "int", nullable: false),
-                    Protein = table.Column<float>(type: "real", nullable: false),
-                    Fat = table.Column<float>(type: "real", nullable: false),
-                    Carbs = table.Column<float>(type: "real", nullable: false),
-                    Instructions = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    ImageData = table.Column<byte[]>(type: "varbinary(max)", nullable: false),
-                    UserId = table.Column<int>(type: "int", nullable: false),
-                    IsPublic = table.Column<bool>(type: "bit", nullable: false)
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    Name = table.Column<string>(type: "TEXT", nullable: false),
+                    Calories = table.Column<int>(type: "INTEGER", nullable: false),
+                    Protein = table.Column<float>(type: "REAL", nullable: false),
+                    Fat = table.Column<float>(type: "REAL", nullable: false),
+                    Carbs = table.Column<float>(type: "REAL", nullable: false),
+                    Instructions = table.Column<string>(type: "TEXT", nullable: false),
+                    ImageData = table.Column<byte[]>(type: "BLOB", nullable: false),
+                    UserId = table.Column<int>(type: "INTEGER", nullable: false),
+                    IsPublic = table.Column<bool>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -198,12 +227,12 @@ namespace KontrolaNawykow.Migrations
                 name: "ShoppingLists",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    UserId = table.Column<int>(type: "int", nullable: false),
-                    IngredientId = table.Column<int>(type: "int", nullable: false),
-                    Amount = table.Column<float>(type: "real", nullable: false),
-                    Status = table.Column<bool>(type: "bit", nullable: false)
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    UserId = table.Column<int>(type: "INTEGER", nullable: false),
+                    IngredientId = table.Column<int>(type: "INTEGER", nullable: false),
+                    Amount = table.Column<float>(type: "REAL", nullable: false),
+                    Status = table.Column<bool>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -226,13 +255,13 @@ namespace KontrolaNawykow.Migrations
                 name: "Statystyki",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    UzytkownikId = table.Column<int>(type: "int", nullable: false),
-                    Data = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    Waga = table.Column<double>(type: "float", nullable: false),
-                    DniDiety = table.Column<int>(type: "int", nullable: false),
-                    ZmianaWagi = table.Column<double>(type: "float", nullable: false)
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    UzytkownikId = table.Column<int>(type: "INTEGER", nullable: false),
+                    Data = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    Waga = table.Column<double>(type: "REAL", nullable: false),
+                    DniDiety = table.Column<int>(type: "INTEGER", nullable: false),
+                    ZmianaWagi = table.Column<double>(type: "REAL", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -249,13 +278,13 @@ namespace KontrolaNawykow.Migrations
                 name: "ToDos",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    UserId = table.Column<int>(type: "int", nullable: false),
-                    Task = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    IsCompleted = table.Column<bool>(type: "bit", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    IsTemplate = table.Column<bool>(type: "bit", nullable: false)
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    UserId = table.Column<int>(type: "INTEGER", nullable: false),
+                    Task = table.Column<string>(type: "TEXT", nullable: false),
+                    IsCompleted = table.Column<bool>(type: "INTEGER", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false, defaultValueSql: "datetime('now')"),
+                    IsTemplate = table.Column<bool>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -272,13 +301,13 @@ namespace KontrolaNawykow.Migrations
                 name: "Blokady",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    UzytkownikId = table.Column<int>(type: "int", nullable: false),
-                    AdminId = table.Column<int>(type: "int", nullable: false),
-                    DataPoczatku = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    DataKonca = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    Powod = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    UzytkownikId = table.Column<int>(type: "INTEGER", nullable: false),
+                    AdminId = table.Column<int>(type: "INTEGER", nullable: false),
+                    DataPoczatku = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    DataKonca = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    Powod = table.Column<string>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -301,14 +330,14 @@ namespace KontrolaNawykow.Migrations
                 name: "MealPlans",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    UserId = table.Column<int>(type: "int", nullable: false),
-                    MealType = table.Column<int>(type: "int", nullable: false),
-                    Date = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    RecipeId = table.Column<int>(type: "int", nullable: true),
-                    CustomEntry = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Eaten = table.Column<bool>(type: "bit", nullable: false)
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    UserId = table.Column<int>(type: "INTEGER", nullable: false),
+                    MealType = table.Column<int>(type: "INTEGER", nullable: false),
+                    Date = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    RecipeId = table.Column<int>(type: "INTEGER", nullable: true),
+                    CustomEntry = table.Column<string>(type: "TEXT", nullable: false),
+                    Eaten = table.Column<bool>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -317,7 +346,8 @@ namespace KontrolaNawykow.Migrations
                         name: "FK_MealPlans_Recipes_RecipeId",
                         column: x => x.RecipeId,
                         principalTable: "Recipes",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_MealPlans_Users_UserId",
                         column: x => x.UserId,
@@ -330,11 +360,11 @@ namespace KontrolaNawykow.Migrations
                 name: "RecipeIngredients",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    RecipeId = table.Column<int>(type: "int", nullable: false),
-                    IngredientId = table.Column<int>(type: "int", nullable: false),
-                    Amount = table.Column<float>(type: "real", nullable: true)
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    RecipeId = table.Column<int>(type: "INTEGER", nullable: false),
+                    IngredientId = table.Column<int>(type: "INTEGER", nullable: false),
+                    Amount = table.Column<float>(type: "REAL", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -354,18 +384,47 @@ namespace KontrolaNawykow.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "RecipeRatings",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    RecipeId = table.Column<int>(type: "INTEGER", nullable: false),
+                    UserId = table.Column<int>(type: "INTEGER", nullable: false),
+                    Rating = table.Column<int>(type: "INTEGER", nullable: false),
+                    Comment = table.Column<string>(type: "TEXT", maxLength: 500, nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false, defaultValueSql: "datetime('now')")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_RecipeRatings", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_RecipeRatings_Recipes_RecipeId",
+                        column: x => x.RecipeId,
+                        principalTable: "Recipes",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_RecipeRatings_Users_UserId",
+                        column: x => x.UserId,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Zgloszenia",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    IdZglaszajacego = table.Column<int>(type: "int", nullable: false),
-                    IdBlokady = table.Column<int>(type: "int", nullable: true),
-                    Powod = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Data = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    Typ = table.Column<int>(type: "int", nullable: false),
-                    Status = table.Column<int>(type: "int", nullable: false),
-                    IdZglaszanego = table.Column<int>(type: "int", nullable: true)
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    IdZglaszajacego = table.Column<int>(type: "INTEGER", nullable: false),
+                    IdBlokady = table.Column<int>(type: "INTEGER", nullable: true),
+                    Powod = table.Column<string>(type: "TEXT", nullable: false),
+                    Data = table.Column<DateTime>(type: "TEXT", nullable: false, defaultValueSql: "datetime('now')"),
+                    Typ = table.Column<int>(type: "INTEGER", nullable: false),
+                    Status = table.Column<int>(type: "INTEGER", nullable: false),
+                    IdZglaszanego = table.Column<int>(type: "INTEGER", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -375,7 +434,7 @@ namespace KontrolaNawykow.Migrations
                         column: x => x.IdBlokady,
                         principalTable: "Blokady",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.SetNull);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_Zgloszenia_Users_IdZglaszajacego",
                         column: x => x.IdZglaszajacego,
@@ -394,10 +453,10 @@ namespace KontrolaNawykow.Migrations
                 name: "ListyZakupow",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    PlanPosilkowId = table.Column<int>(type: "int", nullable: false),
-                    Status = table.Column<int>(type: "int", nullable: false)
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    PlanPosilkowId = table.Column<int>(type: "INTEGER", nullable: false),
+                    Status = table.Column<int>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -414,10 +473,10 @@ namespace KontrolaNawykow.Migrations
                 name: "PlanPosilkowPrzepisy",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    PlanPosilkowId = table.Column<int>(type: "int", nullable: false),
-                    PrzepisId = table.Column<int>(type: "int", nullable: false)
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    PlanPosilkowId = table.Column<int>(type: "INTEGER", nullable: false),
+                    PrzepisId = table.Column<int>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -455,6 +514,17 @@ namespace KontrolaNawykow.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_CustomFoods_UserId",
                 table: "CustomFoods",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_DietetykRatings_DietetykId_UserId",
+                table: "DietetykRatings",
+                columns: new[] { "DietetykId", "UserId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_DietetykRatings_UserId",
+                table: "DietetykRatings",
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
@@ -501,6 +571,17 @@ namespace KontrolaNawykow.Migrations
                 name: "IX_RecipeIngredients_RecipeId",
                 table: "RecipeIngredients",
                 column: "RecipeId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_RecipeRatings_RecipeId_UserId",
+                table: "RecipeRatings",
+                columns: new[] { "RecipeId", "UserId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_RecipeRatings_UserId",
+                table: "RecipeRatings",
+                column: "UserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Recipes_UserId",
@@ -561,6 +642,9 @@ namespace KontrolaNawykow.Migrations
                 name: "CustomFoods");
 
             migrationBuilder.DropTable(
+                name: "DietetykRatings");
+
+            migrationBuilder.DropTable(
                 name: "ListyZakupow");
 
             migrationBuilder.DropTable(
@@ -571,6 +655,9 @@ namespace KontrolaNawykow.Migrations
 
             migrationBuilder.DropTable(
                 name: "RecipeIngredients");
+
+            migrationBuilder.DropTable(
+                name: "RecipeRatings");
 
             migrationBuilder.DropTable(
                 name: "ShoppingLists");
