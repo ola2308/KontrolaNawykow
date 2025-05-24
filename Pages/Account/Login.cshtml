@@ -168,25 +168,22 @@
             <div class="login-form-overlay"></div>
             <div class="login-form-content">
                 <h1 class="login-title font-purple-purse">Logowanie</h1>
+
                 @if (!string.IsNullOrEmpty(Model.ErrorMessage))
                 {
-                    <div class="alert-danger">
-                        @Model.ErrorMessage
-                    </div>
+                    <div class="alert-danger">@Model.ErrorMessage</div>
                 }
                 @if (!string.IsNullOrEmpty(Model.SuccessMessage))
                 {
-                    <div class="success-message">
-                        @Model.SuccessMessage
-                    </div>
+                    <div class="success-message">@Model.SuccessMessage</div>
                 }
+
                 <form method="post">
                     @Html.AntiForgeryToken()
                     <div class="form-group">
                         <input type="text"
                                name="Username"
                                id="Username"
-                               value=""
                                class="login-input"
                                placeholder="Nazwa użytkownika"
                                required />
@@ -201,18 +198,20 @@
                                required />
                         <span asp-validation-for="Password" class="text-danger"></span>
                     </div>
-                    <button type="submit" class="login-button">
-                        Zaloguj się
-                    </button>
+                    <button type="submit" class="login-button">Zaloguj się</button>
                 </form>
+
                 <div style="text-align: center; margin-top: 1.5rem;">
                     <p>
                         Nie masz konta?
-                        <a href="/Account/Register" class="register-link">
-                            Zarejestruj się!
-                        </a>
+                        <a href="/Account/Register" class="register-link">Zarejestruj się!</a>
+                    </p>
+                    <p>
+                        Jesteś dietetykiem?
+                        <a href="/Account/Dietitian/Login" class="register-link">Dołącz do nas</a>
                     </p>
                 </div>
+
                 <div style="text-align: center; margin-top: 3rem;">
                     <p class="font-charmonman" style="font-size: 1.25rem;">
                         Follow your plans not your mood!
@@ -226,19 +225,10 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             console.log('Formularz logowania załadowany');
-
             const form = document.querySelector('form');
-            console.log('Znaleziony formularz:', form);
-
-            form.addEventListener('submit', function(e) {
-                console.log('Próba wysłania formularza logowania...');
-
-                // Wyświetl wartości wszystkich pól
-                const usernameValue = document.getElementById('Username').value;
-                const passwordValue = document.getElementById('Password').value;
-
-                console.log(`Username: ${usernameValue}`);
-                console.log(`Password length: ${passwordValue.length}`);
+            form.addEventListener('submit', function() {
+                console.log(`Username: ${document.getElementById('Username').value}`);
+                console.log(`Password length: ${document.getElementById('Password').value.length}`);
             });
         });
     </script>

@@ -5,7 +5,6 @@
     ViewData["NoFooter"] = true;
     Layout = null;
 }
-
 <!DOCTYPE html>
 <html lang="pl">
 <head>
@@ -172,9 +171,7 @@
 
                 @if (!string.IsNullOrEmpty(Model.ErrorMessage))
                 {
-                    <div class="alert-danger">
-                        @Model.ErrorMessage
-                    </div>
+                    <div class="alert-danger">@Model.ErrorMessage</div>
                 }
 
                 <form method="post">
@@ -183,7 +180,6 @@
                         <input type="text"
                                name="Username"
                                id="Username"
-                               value=""
                                class="login-input"
                                placeholder="Nazwa użytkownika"
                                required />
@@ -194,7 +190,6 @@
                         <input type="email"
                                name="Email"
                                id="Email"
-                               value=""
                                class="login-input"
                                placeholder="Email"
                                required />
@@ -221,17 +216,17 @@
                         <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
                     </div>
 
-                    <button type="submit" class="login-button">
-                        Kontynuuj
-                    </button>
+                    <button type="submit" class="login-button">Kontynuuj</button>
                 </form>
 
                 <div style="text-align: center; margin-top: 1.5rem;">
                     <p>
                         Masz już konto?
-                        <a href="/Account/Login" class="register-link">
-                            Zaloguj się!
-                        </a>
+                        <a href="/Account/Login" class="register-link">Zaloguj się!</a>
+                    </p>
+                    <p>
+                        Jesteś dietetykiem?
+                        <a href="/Account/Dietitian/Login" class="register-link">Dołącz do nas</a>
                     </p>
                 </div>
 
@@ -243,30 +238,18 @@
             </div>
         </div>
 
-        <div class="images-section" style="background-image: url('/images/stronarejestracji2.png')">
-        </div>
+        <div class="images-section" style="background-image: url('/images/stronarejestracji2.png')"></div>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             console.log('Formularz rejestracji załadowany');
-
             const form = document.querySelector('form');
-            console.log('Znaleziony formularz:', form);
-
-            form.addEventListener('submit', function (e) {
-                console.log('Próba wysłania formularza...');
-
-                // Wyświetl wartości wszystkich pól
-                const usernameValue = document.getElementById('Username').value;
-                const emailValue = document.getElementById('Email').value;
-                const passwordValue = document.getElementById('Password').value;
-                const confirmPasswordValue = document.getElementById('ConfirmPassword').value;
-
-                console.log(`Username: ${usernameValue}`);
-                console.log(`Email: ${emailValue}`);
-                console.log(`Password length: ${passwordValue.length}`);
-                console.log(`ConfirmPassword length: ${confirmPasswordValue.length}`);
+            form.addEventListener('submit', function () {
+                console.log(`Username: ${document.getElementById('Username').value}`);
+                console.log(`Email: ${document.getElementById('Email').value}`);
+                console.log(`Password length: ${document.getElementById('Password').value.length}`);
+                console.log(`ConfirmPassword length: ${document.getElementById('ConfirmPassword').value.length}`);
             });
         });
     </script>
