@@ -17,6 +17,12 @@
 </head>
 
 <body>
+    <script>
+        function confirmDelete(id) {
+            link = "/Admin/Reports?Delete=" + id;
+            if(confirm("Czy na pewno usunąć ten wpis?") == true) window.location.href = link;
+        }
+    </script>
     <div class="main-container">
         <div class="header-tabs">
             <div class="tabs-container">
@@ -32,34 +38,76 @@
             <a href="/Admin/Reports" class="active">Przeglądaj zgłoszenia</a>
             <a href="/Admin/Bans">Przeglądaj blokady</a>
         </div>
-        <div class="item-container">
-            <h1>Aktywne zgłoszenia</h1>
-            @if( !Model.reports.Any() )
+        <div class="search-container">
+            <h1>Zgłoszenia</h1>
+            <form>
+                <label>Użytkownik:</label>
+                <input type="text" name="Search" />
+                <input type="submit" value="Szukaj" />
+            </form>
+            @if (!Model.reports.Any())
             {
-                <p class="alert-info">Brak aktywnych zgłoszeń</p>
+                <p class="alert-info">Brak zgłoszeń</p>
+                <a href="/Admin/Reports">Wyczyść filtry</a>
             }
-            @if(Model.reports.Any())
+            @if (Model.reports.Any())
             {
-                <table class="tab-content">
+                <table id="bantable" class="tab-content">
                     <tr>
-                        <td>Zgłaszający</td>
-                        <td>Zgłaszany</td>
+                        <td>Zgłoszone przez</td>
+                        <td>Zgłoszony użytkownik</td>
                         <td>Data</td>
+                        <td>Typ</td>
+                        <td>Status</td>
                         <td>Akcje</td>
                     </tr>
-                @foreach (var report in Model.reports)
-                {
+                    @foreach (var r in Model.reports)
+                    {
                         <tr>
-                            <td>@report.Zglaszajacy.Username</td>
-                            <td>@report.Zglaszany.Username</td>
-                            <td>@report.Data.ToString()</td>
-                            <td><a>Sprawdź szczegóły</a></td>
+                            <td>@r.Zglaszajacy.Username</td>
+                            <td>@r.Zglaszany.Username</td>
+                            <td>@r.Data.ToString()</td>
+                            <td>@r.Typ</td>
+                            <td>@r.Status</td>
+                            <td><a href="/Admin/Reports\@GetSearchParams()View=@r.Id">Sprawdź szczegóły</a></td>
                         </tr>
-                }
+                    }
                 </table>
+                <p>
+                    <b>Strona: </b>@for (int i = 1; i <= Model.PageCount; i++)
+                    {
+                        <a href="/Admin/Reports?PageNumber=@i">@i</a>
+                    }
+                </p>
             }
-            
+            @if (Model.View != null)
+            {
+                <div class="details-container">
+                    <h1>Szczegóły zgłoszenia #@Model.View</h1>
+                    @if (Model.displayedReport != null)
+                    {
+                        <p><b>Blokujący/a:</b> @Model.displayedReport.Zglaszajacy.Username</p>
+                        <p><b>Zablokowany/a:</b> @Model.displayedReport.Zglaszany.Username</p>
+                        <p><b>Powód zgłoszenia:</b> @Model.displayedReport.Powod</p>
+                        <button onclick="confirmDelete(@Model.View)">Usuń</button>
+                        <button>Nałóż blokadę(coming soon!)</button>
+                    }
+                    else
+                    {
+                        <p>Nie istnieje</p>
+                    }
+                </div>
+            }
         </div>
     </div>
 </body>
 </html>
+@functions {
+    string GetSearchParams()
+    {
+        string result = "?";
+        if (Model.PageNumber > 1) result += "PageNumber=" + Model.PageNumber + "&";
+        if (Model.Search != null) result += "Search=" + Model.Search + "&";
+        return result;
+    }
+}

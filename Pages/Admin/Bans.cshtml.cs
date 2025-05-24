@@ -18,6 +18,22 @@ namespace KontrolaNawykow.Pages.Admin
 
         public List<Blokada> bans {  get; set; } = new List<Blokada>();
 
+        public Blokada? displayedBan { get; set; }
+
+        [BindProperty(SupportsGet = true)]
+        public int PageNumber { get; set; } = 1;
+
+        [BindProperty(SupportsGet = true)]
+        public string? Search { get; set; }
+
+        [BindProperty(SupportsGet = true)]
+        public int? View {  get; set; }
+
+        [BindProperty(SupportsGet = true)]
+        public int? Delete { get; set; }
+
+        public int PageCount { get; set; }
+
         public async Task<IActionResult> OnGetAsync()
         {
             try
@@ -50,8 +66,24 @@ namespace KontrolaNawykow.Pages.Admin
                     return RedirectToPage("/Diet/Index");
                 }
 
-                //bans = await _context.Blokady.Take(10).ToListAsync();
-                bans = await _context.Blokady.Include(ban => ban.Admin).Take(10).ToListAsync();
+                if(Delete != null)
+                {
+                    _context.Blokady.Where(ban => ban.Id == Delete).ExecuteDelete();
+                    return RedirectToPage("/Admin/Bans");
+                }
+
+                var records = await _context.Blokady.CountAsync();
+                if (records > 0) PageCount = --records / 10 + 1;
+                
+                if (PageNumber < 1) PageNumber = 1;
+                bans = await (Search == null ? _context.Blokady.Include(ban => ban.Uzytkownik).Include(ban => ban.Admin).Skip((PageNumber-1)*10).Take(10).ToListAsync()
+                     : _context.Blokady.Include(ban => ban.Uzytkownik).Include(ban => ban.Admin).Where(ban => ban.Uzytkownik.Username == Search || ban.Admin.Uzytkownik.Username == Search).Skip((PageNumber - 1) * 10).Take(10).ToListAsync());
+
+                if(View !=  null)
+                {
+                    displayedBan = await (_context.Blokady.Include(ban => ban.Uzytkownik).Include(ban => ban.Admin).Where(ban => ban.Id == View).FirstAsync());
+                }
+                else displayedBan = null;
 
                 return Page();
             }

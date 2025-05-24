@@ -8,15 +8,31 @@ namespace KontrolaNawykow.Pages.Admin
 {
     public class ReportsModel : PageModel
     {
+        [BindProperty(SupportsGet = true)]
+        public int PageNumber { get; set; } = 1;
+
+        [BindProperty(SupportsGet = true)]
+        public string? Search { get; set; }
+
+        [BindProperty(SupportsGet = true)]
+        public int? View { get; set; }
+
+        [BindProperty(SupportsGet = true)]
+        public int? Delete { get; set; }
+
+        public int PageCount { get; set; }
+
         public User CurrentUser { get; set; }
+
+        public List<Zgloszenie> reports { get; set; } = new List<Zgloszenie>();
+
+        public Zgloszenie? displayedReport { get; set; }
 
         private readonly ApplicationDbContext _context;
         public ReportsModel(ApplicationDbContext context)
         {
             _context = context;
         }
-
-        public List<Zgloszenie> reports { get; set; } = new List<Zgloszenie>();
 
         [BindProperty(SupportsGet = true)]
         public int page { get; set; } = 0;
@@ -58,7 +74,24 @@ namespace KontrolaNawykow.Pages.Admin
                     return RedirectToPage("/Diet/Index");
                 }
 
-                reports = await _context.Zgloszenia.Take(10).ToListAsync();
+                if (Delete != null)
+                {
+                    _context.Zgloszenia.Where(r => r.Id == Delete).ExecuteDelete();
+                    return RedirectToPage("/Admin/Reports");
+                }
+
+                var records = await _context.Blokady.CountAsync();
+                if (records > 0) PageCount = --records / 10 + 1;
+
+                if (PageNumber < 1) PageNumber = 1;
+                reports = await (Search == null ? _context.Zgloszenia.Include(r => r.Zglaszajacy).Include(r => r.Zglaszany).Skip((PageNumber - 1) * 10).Take(10).ToListAsync()
+                     : _context.Zgloszenia.Include(r => r.Zglaszajacy).Include(r => r.Zglaszany).Where(r => r.Zglaszajacy.Username == Search || r.Zglaszany.Username == Search).Skip((PageNumber - 1) * 10).Take(10).ToListAsync());
+
+                if (View != null)
+                {
+                    displayedReport = await (_context.Zgloszenia.Include(r => r.Zglaszajacy).Include(r => r.Zglaszany).Where(r => r.Id == View).FirstAsync());
+                }
+                else displayedReport = null;
 
                 return Page();
             }

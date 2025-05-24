@@ -17,6 +17,12 @@
 </head>
 
 <body>
+    <script>
+        function confirmDelete(id) {
+            link = "/Admin/Bans?Delete=" + id;
+            if(confirm("Czy na pewno usunąć ten wpis?") == true) window.location.href = link;
+        }
+    </script>
     <div class="main-container">
         <div class="header-tabs">
             <div class="tabs-container">
@@ -33,34 +39,73 @@
             <a href="/Admin/Bans" class="active">Przeglądaj blokady</a>
         </div>
         <div class="item-container">
-            <h1>Blokady</h1>
-            @if (!Model.bans.Any())
-            {
-                <p class="alert-info">Brak aktywnych zgłoszeń</p>
-            }
-            @if (Model.bans.Any())
-            {
-                <table class="tab-content">
-                    <tr>
-                        <td>Nałożona przez</td>
-                        <td>Zablokowany użytkownik</td>
-                        <td>Początek</td>
-                        <td>Koniec</td>
-                        <td>Akcje</td>
-                    </tr>
-                    @foreach (var ban in Model.bans)
-                    {
+            <div class="search-container">
+                <h1>Blokady</h1>
+                <form>
+                    <label>Użytkownik:</label>
+                    <input type="text" name="Search" />
+                    <input type="submit" value="Szukaj" />
+                </form>
+                @if (!Model.bans.Any())
+                {
+                    <p class="alert-info">Brak blokad</p>
+                    <a href="/Admin/Bans">Wyczyść filtry</a>
+                }
+                @if (Model.bans.Any())
+                {                
+                    <table id="bantable" class="tab-content">
                         <tr>
-                            <td>@ban.Admin.Uzytkownik.Username</td>
-                            <td>@ban.Uzytkownik.Username</td>
-                            <td>@ban.DataPoczatku.ToString()</td>
-                            <td>@ban.DataKonca.ToString()</td>
-                            <td><a>Sprawdź szczegóły</a></td>
+                            <td>Nałożona przez</td>
+                            <td>Zablokowany użytkownik</td>
+                            <td>Początek</td>
+                            <td>Koniec</td>
+                            <td>Akcje</td>
                         </tr>
+                        @foreach (var ban in Model.bans)
+                        {
+                            <tr>
+                                <td>@ban.Admin.Uzytkownik.Username</td>
+                                <td>@ban.Uzytkownik.Username</td>
+                                <td>@ban.DataPoczatku.ToString()</td>
+                                <td>@ban.DataKonca.ToString()</td>
+                                <td><a href="/Admin/Bans\@GetSearchParams()View=@ban.Id">Sprawdź szczegóły</a></td>
+                            </tr>
+                        }
+                    </table>
+                    <p><b>Strona: </b>@for (int i = 1; i <= Model.PageCount; i++)
+                        {
+                            <a href="/Admin/Bans?PageNumber=@i">@i</a> 
+                        }
+                    </p>
+                }
+            </div>
+            @if(Model.View != null)
+            {
+                <div class="details-container">
+                    <h1>Szczegóły blokady #@Model.View</h1>
+                    @if(Model.displayedBan != null) 
+                    {
+                        <p>Blokujący/a: @Model.displayedBan.Admin.Uzytkownik.Username</p>
+                        <p>Zablokowany/a: @Model.displayedBan.Uzytkownik.Username</p>
+                        <p>Powód blokady: @Model.displayedBan.Powod</p>
+                        <button onclick="confirmDelete(@Model.View)">Usuń(zniesienie blokady!)</button>
                     }
-                </table>
-            }
+                    else
+                    {
+                        <p>Nie istnieje</p>
+                    }
+                </div>
+            }            
         </div>
     </div>
 </body>
 </html>
+@functions {
+    string GetSearchParams()
+    {
+        string result = "?";
+        if (Model.PageNumber > 1) result += "PageNumber=" + Model.PageNumber + "&";
+        if (Model.Search != null) result += "Search=" + Model.Search + "&";
+        return result;
+    }
+}
