@@ -43,6 +43,7 @@ namespace KontrolaNawykow.Models
         public int? DietetykId { get; set; }
         [ForeignKey("DietetykId")]
         public Dietetyk Dietetyk { get; set; }
+        public int? DieticianAccepted { get; set; }
 
         public List<Recipe> Recipes { get; set; }
         public List<MealPlan> MealPlans { get; set; }
