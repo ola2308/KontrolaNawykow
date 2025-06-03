@@ -19,7 +19,10 @@ namespace KontrolaNawykow.Pages.YourDietician
 		public User CurrentUser { get; set; }
 		public List<Dietetyk> Dieticians { get; set; } = new List<Dietetyk>();
 
-		public async Task<IActionResult> OnGetAsync()
+        [BindProperty(SupportsGet = true)]
+        public string ApplyToDietician { get; set; }
+
+        public async Task<IActionResult> OnGetAsync()
 		{
 			try
 			{
@@ -44,6 +47,13 @@ namespace KontrolaNawykow.Pages.YourDietician
 
 				Dieticians = await _context.Dietetycy
 					.ToListAsync();
+
+				if (ApplyToDietician != null)
+				{
+					CurrentUser.DietetykId = int.Parse(ApplyToDietician);
+                    await _context.SaveChangesAsync();
+					return RedirectToPage("/YourDietician/Index");
+                }
 
 				return Page();
 			}

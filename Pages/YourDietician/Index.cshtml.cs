@@ -49,6 +49,7 @@ namespace KontrolaNawykow.Pages.DieticianConnection
                 if (RemoveDietician != null)
                 {
                     CurrentUser.DietetykId = null;
+                    CurrentUser.DieticianAccepted = null;
                     await _context.SaveChangesAsync();
                 }
                 else
