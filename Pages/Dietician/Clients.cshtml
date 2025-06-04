@@ -1,8 +1,8 @@
 ﻿@page
-@model KontrolaNawykow.Pages.Dietician.IndexModel
+@model KontrolaNawykow.Pages.Dietician.ClientsModel
 @{
-	ViewData["Title"] = "Dietetyk";
-	Layout = null;
+    ViewData["Title"] = "Twoi klienci";
+    Layout = null;
 }
 
 <!DOCTYPE html>
@@ -10,7 +10,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Twój profil - KontrolaNawyków</title>
+    <title>Twoi klienci - KontrolaNawyków</title>
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link href="https://fonts.googleapis.com/css2?family=Purple+Purse&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Charmonman:wght@400;700&display=swap" rel="stylesheet">
@@ -97,6 +97,11 @@
         }
 
         .dietician-prof {
+            border: 1px solid #333;
+            border-radius: 5px;
+            overflow: hidden;
+            margin: 10px;
+            padding: 10px;
         }
     </style>
 </head>
@@ -104,26 +109,55 @@
     <div class="main-container">
         <div class="header-tabs">
             <div class="tabs-container">
-                <a href="/Dietician/Index" class="tab-button active">Twój profil</a>
-                <a href="/Dietician/Clients" class="tab-button">Twoi klienci</a>
+                <a href="/Dietician/Index" class="tab-button">Twój profil</a>
+                <a href="/Dietician/Clients" class="tab-button active">Twoi klienci</a>
                 <a href="/Dietician/WaitingClients" class="tab-button">Osoby oczekujące</a>
             </div>
         </div>
     </div>
     <div class="content-container">
-
-        <h3>Twoje dane</h3>
-
-        <div class="dietician-prof">
-            @(Model.CurrentDietician.Imie) @(Model.CurrentDietician.Nazwisko)
-            <br />
-            Specjalizacja: @(Model.CurrentDietician.Specjalizacja)
-            <br />
-            Email: @(Model.CurrentDietician.Email)
-            <br />
-            Numer telefonu: @(Model.CurrentDietician.Telefon)
-            <br />
-        </div>
+        @if (Model.Clients.Count == 0)
+        {
+            <p>Na razie nie masz żadnych klientów</p>
+        }
+        else
+        {
+            <h3>Lista twoich klientów i ich dane:</h3>
+            foreach (var client in Model.Clients)
+            {
+                <div class="dietician-prof">
+                    Nazwa użytkownika: @(client.Username)
+                    <br />
+                    Adres Email: @(client.Email)
+                    <br />
+                    Płeć: @(client.Plec)
+                    <br />
+                    Wiek: @(client.Wiek)
+                    <br />
+                    Waga: @(client.Waga)
+                    <br />
+                    Wzrost: @(client.Wzrost)
+                    <br />
+                    Aktywność fizyczna: @(client.AktywnoscFizyczna)
+                    <br />
+                    Rodzaj pracy: @(client.RodzajPracy)
+                    <br />
+                    Cel: @(client.Cel)
+                    <br />
+                    BMI: @(client.CustomBmi)
+                    <br />
+                    Deficyt kaloryczny: @(client.CustomCaloriesDeficit)
+                    <br />
+                    Liczba gram spożywanego białka dziennie: @(client.CustomProteinGrams)
+                    <br />
+                    Liczba gram spożywanych węglowodanów dziennie: @(client.CustomCarbsGrams)
+                    <br />
+                    Liczba gram spożywanych tłuszczów dziennie: @(client.CustomFatGrams)
+                    <br />
+                </div>
+            }
+        }
+        
     </div>
 </body>
 </html>
