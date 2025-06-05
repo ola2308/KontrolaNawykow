@@ -32,6 +32,9 @@ namespace KontrolaNawykow.Pages.Admin
         [BindProperty(SupportsGet = true)]
         public int? Delete { get; set; }
 
+        [BindProperty]
+        public int? Duration { get; set; }
+
         public int PageCount { get; set; }
 
         public async Task<IActionResult> OnGetAsync()

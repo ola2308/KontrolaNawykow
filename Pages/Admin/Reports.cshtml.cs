@@ -20,6 +20,12 @@ namespace KontrolaNawykow.Pages.Admin
         [BindProperty(SupportsGet = true)]
         public int? Delete { get; set; }
 
+        [BindProperty]
+        public int? Duration { get; set; }
+
+        [BindProperty]
+        public String Description { get; set; }
+
         public int PageCount { get; set; }
 
         public User CurrentUser { get; set; }
@@ -101,6 +107,69 @@ namespace KontrolaNawykow.Pages.Admin
                 Console.WriteLine($"B³¹d podczas ³adowania strony diety: {ex.Message}");
                 return RedirectToPage("/Error", new { message = ex.Message });
             }
+        }
+
+        public async Task<IActionResult> OnPostAsync()
+        {
+            try
+            {
+                // Pobierz ID zalogowanego u¿ytkownika
+                if (!User.Identity.IsAuthenticated)
+                {
+                    return RedirectToPage("/Account/Login");
+                }
+
+                var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
+                {
+                    return RedirectToPage("/Account/Login");
+                }
+
+                // Pobierz dane u¿ytkownika
+                CurrentUser = await _context.Users
+                    .FirstOrDefaultAsync(u => u.Id == userId);
+
+                if (CurrentUser == null)
+                {
+                    return RedirectToPage("/Account/Login");
+                }
+
+                // SprawdŸ, czy u¿ytkownik jest administratorem
+                var CurrentAdmin = _context.Admins.Where(a => a.UzytkownikId == CurrentUser.Id);
+                if (!CurrentAdmin.Any())
+                {
+                    return RedirectToPage("/Diet/Index");
+                }
+                
+                var adminId = CurrentAdmin.First().Id;
+
+                Zgloszenie report = await(_context.Zgloszenia.Include(z => z.Zglaszajacy).Where(z => z.Id == View).SingleAsync());
+
+                Blokada ban = new Blokada
+                {
+                    UzytkownikId = (int)report.IdZglaszanego,
+                    AdminId = adminId,
+                    Powod = Description,
+                    DataPoczatku = DateTime.UtcNow,
+                    DataKonca = DateTime.UtcNow.AddDays((int)Duration)
+                };
+
+                report.Status = StatusZgloszenia.Zamkniete;
+
+                _context.Blokady.Add(ban);
+                _context.Zgloszenia.Update(report);
+                await _context.SaveChangesAsync();
+
+                return Redirect("Reports");
+            }
+
+            catch (Exception ex)
+            {
+                // Logowanie b³êdu
+                Console.WriteLine($"B³¹d podczas ³adowania strony diety: {ex.Message}");
+                return RedirectToPage("/Error", new { message = ex.Message });
+            }
+                        
         }
     }
 }

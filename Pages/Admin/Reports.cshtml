@@ -22,6 +22,19 @@
             link = "/Admin/Reports?Delete=" + id;
             if(confirm("Czy na pewno usunąć ten wpis?") == true) window.location.href = link;
         }
+
+        function confirmBan(id) {
+            const duration = document.getElementById("BanDuration").value;
+
+            if(confirm("Czy na pewno zablokować wskazanego użytkownika?") == true) window.location.href = link;
+        }
+
+        function ShowDeleteForm()
+        {
+            document.getElementById("DeleteForm").style = "display:block;";
+        }
+
+
     </script>
     <div class="main-container">
         <div class="header-tabs">
@@ -90,7 +103,15 @@
                         <p><b>Zablokowany/a:</b> @Model.displayedReport.Zglaszany.Username</p>
                         <p><b>Powód zgłoszenia:</b> @Model.displayedReport.Powod</p>
                         <button onclick="confirmDelete(@Model.View)">Usuń</button>
-                        <button>Nałóż blokadę(coming soon!)</button>
+                        <button onclick="ShowDeleteForm()">"Nałóż blokadę(coming soon!)"</button>
+                        <form method="post" action="/Admin/Reports?View=@Model.View" id="DeleteForm" style="display:none;">
+                            @Html.AntiForgeryToken()
+                            <label for="number">Czas trwania blokady</label>
+                            <input type="number" id="BanDuration" name="Duration"/>
+                            <label for="Description">Opis blokady</label>
+                            <input type="text" name="Description" />
+                            <input type="submit" value="Potwierdź" />
+                        </form>
                     }
                     else
                     {
