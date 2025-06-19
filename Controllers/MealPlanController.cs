@@ -28,7 +28,14 @@ namespace KontrolaNawykow.Controllers
         {
             try
             {
-                var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+                var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
+                {
+                    return Unauthorized("Nie można zidentyfikować użytkownika");
+                }
+
+                Console.WriteLine($"Loading meal plans for user ID: {userId}");
+
                 var mealPlans = await _context.MealPlans
                     .Where(mp => mp.UserId == userId)
                     .Include(mp => mp.Recipe)
@@ -38,35 +45,56 @@ namespace KontrolaNawykow.Controllers
                     .ThenBy(mp => mp.MealType)
                     .ToListAsync();
 
+                Console.WriteLine($"Found {mealPlans.Count} meal plans");
+
                 // Convert to view model for compatibility with frontend
-                var mealPlanViewModels = mealPlans.Select(mp => new MealPlanViewModel
+                var mealPlanViewModels = new List<MealPlanViewModel>();
+
+                foreach (var mp in mealPlans)
                 {
-                    Id = mp.Id,
-                    UserId = mp.UserId,
-                    Date = mp.Date,
-                    MealType = mp.MealType,
-                    CustomEntry = mp.CustomEntry,
-                    Eaten = mp.Eaten,
-                    Gramature = mp.Gramature,
+                    try
+                    {
+                        var viewModel = new MealPlanViewModel
+                        {
+                            Id = mp.Id,
+                            UserId = mp.UserId,
+                            Date = mp.Date,
+                            MealType = mp.MealType,
+                            CustomEntry = mp.CustomEntry ?? string.Empty,
+                            Eaten = mp.Eaten,
+                            Gramature = mp.Gramature ?? 100,
 
-                    // Nutrition data - prefer custom values if available, otherwise use recipe
-                    Calories = mp.CustomCalories ?? (mp.Recipe?.Calories ?? mp.PlanPosilkowPrzepisy.FirstOrDefault()?.Przepis?.Calories ?? 0),
-                    Protein = mp.CustomProtein ?? (mp.Recipe?.Protein ?? mp.PlanPosilkowPrzepisy.FirstOrDefault()?.Przepis?.Protein ?? 0),
-                    Carbs = mp.CustomCarbs ?? (mp.Recipe?.Carbs ?? mp.PlanPosilkowPrzepisy.FirstOrDefault()?.Przepis?.Carbs ?? 0),
-                    Fat = mp.CustomFat ?? (mp.Recipe?.Fat ?? mp.PlanPosilkowPrzepisy.FirstOrDefault()?.Przepis?.Fat ?? 0),
+                            // Nutrition data - prefer custom values if available, otherwise use recipe
+                            Calories = mp.CustomCalories ?? (mp.Recipe?.Calories ?? mp.PlanPosilkowPrzepisy?.FirstOrDefault()?.Przepis?.Calories ?? 0),
+                            Protein = mp.CustomProtein ?? (mp.Recipe?.Protein ?? mp.PlanPosilkowPrzepisy?.FirstOrDefault()?.Przepis?.Protein ?? 0),
+                            Carbs = mp.CustomCarbs ?? (mp.Recipe?.Carbs ?? mp.PlanPosilkowPrzepisy?.FirstOrDefault()?.Przepis?.Carbs ?? 0),
+                            Fat = mp.CustomFat ?? (mp.Recipe?.Fat ?? mp.PlanPosilkowPrzepisy?.FirstOrDefault()?.Przepis?.Fat ?? 0),
 
-                    // Preferuj przepis z bezpośredniej relacji, jeśli istnieje
-                    Recipe = mp.Recipe ?? mp.PlanPosilkowPrzepisy.FirstOrDefault()?.Przepis,
-                    RecipeId = mp.RecipeId ?? mp.PlanPosilkowPrzepisy.FirstOrDefault()?.PrzepisId,
+                            // Preferuj przepis z bezpośredniej relacji, jeśli istnieje
+                            Recipe = mp.Recipe ?? mp.PlanPosilkowPrzepisy?.FirstOrDefault()?.Przepis,
+                            RecipeId = mp.RecipeId ?? mp.PlanPosilkowPrzepisy?.FirstOrDefault()?.PrzepisId,
 
-                    // Custom nutrition flags
-                    HasCustomNutrition = mp.CustomCalories.HasValue || mp.CustomProtein.HasValue || mp.CustomCarbs.HasValue || mp.CustomFat.HasValue
-                }).ToList();
+                            // Custom nutrition flags
+                            HasCustomNutrition = mp.CustomCalories.HasValue || mp.CustomProtein.HasValue || mp.CustomCarbs.HasValue || mp.CustomFat.HasValue
+                        };
 
-                return mealPlanViewModels;
+                        mealPlanViewModels.Add(viewModel);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error processing meal plan {mp.Id}: {ex.Message}");
+                        // Skip this meal plan but continue with others
+                        continue;
+                    }
+                }
+
+                Console.WriteLine($"Successfully converted {mealPlanViewModels.Count} meal plans to view models");
+                return Ok(mealPlanViewModels);
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"Error in GetMealPlans: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
                 return StatusCode(500, $"Błąd podczas pobierania planu posiłków: {ex.Message}");
             }
         }
@@ -77,7 +105,12 @@ namespace KontrolaNawykow.Controllers
         {
             try
             {
-                var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+                var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
+                {
+                    return Unauthorized("Nie można zidentyfikować użytkownika");
+                }
+
                 var mealPlan = await _context.MealPlans
                     .Include(mp => mp.Recipe)
                     .Include(mp => mp.PlanPosilkowPrzepisy)
@@ -96,27 +129,28 @@ namespace KontrolaNawykow.Controllers
                     UserId = mealPlan.UserId,
                     Date = mealPlan.Date,
                     MealType = mealPlan.MealType,
-                    CustomEntry = mealPlan.CustomEntry,
+                    CustomEntry = mealPlan.CustomEntry ?? string.Empty,
                     Eaten = mealPlan.Eaten,
-                    Gramature = mealPlan.Gramature,
+                    Gramature = mealPlan.Gramature ?? 100,
 
                     // Nutrition data - prefer custom values if available
-                    Calories = mealPlan.CustomCalories ?? (mealPlan.Recipe?.Calories ?? mealPlan.PlanPosilkowPrzepisy.FirstOrDefault()?.Przepis?.Calories ?? 0),
-                    Protein = mealPlan.CustomProtein ?? (mealPlan.Recipe?.Protein ?? mealPlan.PlanPosilkowPrzepisy.FirstOrDefault()?.Przepis?.Protein ?? 0),
-                    Carbs = mealPlan.CustomCarbs ?? (mealPlan.Recipe?.Carbs ?? mealPlan.PlanPosilkowPrzepisy.FirstOrDefault()?.Przepis?.Carbs ?? 0),
-                    Fat = mealPlan.CustomFat ?? (mealPlan.Recipe?.Fat ?? mealPlan.PlanPosilkowPrzepisy.FirstOrDefault()?.Przepis?.Fat ?? 0),
+                    Calories = mealPlan.CustomCalories ?? (mealPlan.Recipe?.Calories ?? mealPlan.PlanPosilkowPrzepisy?.FirstOrDefault()?.Przepis?.Calories ?? 0),
+                    Protein = mealPlan.CustomProtein ?? (mealPlan.Recipe?.Protein ?? mealPlan.PlanPosilkowPrzepisy?.FirstOrDefault()?.Przepis?.Protein ?? 0),
+                    Carbs = mealPlan.CustomCarbs ?? (mealPlan.Recipe?.Carbs ?? mealPlan.PlanPosilkowPrzepisy?.FirstOrDefault()?.Przepis?.Carbs ?? 0),
+                    Fat = mealPlan.CustomFat ?? (mealPlan.Recipe?.Fat ?? mealPlan.PlanPosilkowPrzepisy?.FirstOrDefault()?.Przepis?.Fat ?? 0),
 
                     // Preferuj przepis z bezpośredniej relacji, jeśli istnieje
-                    Recipe = mealPlan.Recipe ?? mealPlan.PlanPosilkowPrzepisy.FirstOrDefault()?.Przepis,
-                    RecipeId = mealPlan.RecipeId ?? mealPlan.PlanPosilkowPrzepisy.FirstOrDefault()?.PrzepisId,
+                    Recipe = mealPlan.Recipe ?? mealPlan.PlanPosilkowPrzepisy?.FirstOrDefault()?.Przepis,
+                    RecipeId = mealPlan.RecipeId ?? mealPlan.PlanPosilkowPrzepisy?.FirstOrDefault()?.PrzepisId,
 
                     HasCustomNutrition = mealPlan.CustomCalories.HasValue || mealPlan.CustomProtein.HasValue || mealPlan.CustomCarbs.HasValue || mealPlan.CustomFat.HasValue
                 };
 
-                return mealPlanViewModel;
+                return Ok(mealPlanViewModel);
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"Error in GetMealPlan: {ex.Message}");
                 return StatusCode(500, $"Błąd podczas pobierania posiłku: {ex.Message}");
             }
         }
@@ -135,9 +169,13 @@ namespace KontrolaNawykow.Controllers
                     return BadRequest("Brak danych posiłku");
                 }
 
-                Console.WriteLine($"Otrzymane dane: Date={mealPlanDto.Date}, MealType={mealPlanDto.MealType}, RecipeId={mealPlanDto.RecipeId}, Gramature={mealPlanDto.Gramature}");
+                var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
+                {
+                    return Unauthorized("Nie można zidentyfikować użytkownika");
+                }
 
-                var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+                Console.WriteLine($"Otrzymane dane: Date={mealPlanDto.Date}, MealType={mealPlanDto.MealType}, RecipeId={mealPlanDto.RecipeId}, Gramature={mealPlanDto.Gramature}");
                 Console.WriteLine($"User ID: {userId}");
 
                 using var transaction = await _context.Database.BeginTransactionAsync();
@@ -145,11 +183,23 @@ namespace KontrolaNawykow.Controllers
 
                 try
                 {
+                    // Parse date safely
+                    if (!DateTime.TryParse(mealPlanDto.Date, out DateTime parsedDate))
+                    {
+                        return BadRequest("Nieprawidłowy format daty");
+                    }
+
+                    // Parse meal type safely
+                    if (!Enum.TryParse<MealType>(mealPlanDto.MealType, out MealType parsedMealType))
+                    {
+                        return BadRequest("Nieprawidłowy typ posiłku");
+                    }
+
                     var mealPlan = new MealPlan
                     {
                         UserId = userId,
-                        Date = DateTime.Parse(mealPlanDto.Date),
-                        MealType = (MealType)Enum.Parse(typeof(MealType), mealPlanDto.MealType),
+                        Date = parsedDate,
+                        MealType = parsedMealType,
                         RecipeId = mealPlanDto.RecipeId, // Ustaw bezpośrednią relację (stary sposób)
                         Eaten = false,
                         CustomEntry = mealPlanDto.CustomEntry ?? string.Empty,
@@ -210,13 +260,13 @@ namespace KontrolaNawykow.Controllers
                         Gramature = savedMealPlan.Gramature,
 
                         // Use custom nutrition if available, otherwise use recipe nutrition
-                        Calories = savedMealPlan.CustomCalories ?? (savedMealPlan.Recipe?.Calories ?? savedMealPlan.PlanPosilkowPrzepisy.FirstOrDefault()?.Przepis?.Calories ?? 0),
-                        Protein = savedMealPlan.CustomProtein ?? (savedMealPlan.Recipe?.Protein ?? savedMealPlan.PlanPosilkowPrzepisy.FirstOrDefault()?.Przepis?.Protein ?? 0),
-                        Carbs = savedMealPlan.CustomCarbs ?? (savedMealPlan.Recipe?.Carbs ?? savedMealPlan.PlanPosilkowPrzepisy.FirstOrDefault()?.Przepis?.Carbs ?? 0),
-                        Fat = savedMealPlan.CustomFat ?? (savedMealPlan.Recipe?.Fat ?? savedMealPlan.PlanPosilkowPrzepisy.FirstOrDefault()?.Przepis?.Fat ?? 0),
+                        Calories = savedMealPlan.CustomCalories ?? (savedMealPlan.Recipe?.Calories ?? savedMealPlan.PlanPosilkowPrzepisy?.FirstOrDefault()?.Przepis?.Calories ?? 0),
+                        Protein = savedMealPlan.CustomProtein ?? (savedMealPlan.Recipe?.Protein ?? savedMealPlan.PlanPosilkowPrzepisy?.FirstOrDefault()?.Przepis?.Protein ?? 0),
+                        Carbs = savedMealPlan.CustomCarbs ?? (savedMealPlan.Recipe?.Carbs ?? savedMealPlan.PlanPosilkowPrzepisy?.FirstOrDefault()?.Przepis?.Carbs ?? 0),
+                        Fat = savedMealPlan.CustomFat ?? (savedMealPlan.Recipe?.Fat ?? savedMealPlan.PlanPosilkowPrzepisy?.FirstOrDefault()?.Przepis?.Fat ?? 0),
 
-                        Recipe = savedMealPlan.Recipe ?? savedMealPlan.PlanPosilkowPrzepisy.FirstOrDefault()?.Przepis,
-                        RecipeId = savedMealPlan.RecipeId ?? savedMealPlan.PlanPosilkowPrzepisy.FirstOrDefault()?.PrzepisId,
+                        Recipe = savedMealPlan.Recipe ?? savedMealPlan.PlanPosilkowPrzepisy?.FirstOrDefault()?.Przepis,
+                        RecipeId = savedMealPlan.RecipeId ?? savedMealPlan.PlanPosilkowPrzepisy?.FirstOrDefault()?.PrzepisId,
 
                         HasCustomNutrition = savedMealPlan.CustomCalories.HasValue || savedMealPlan.CustomProtein.HasValue || savedMealPlan.CustomCarbs.HasValue || savedMealPlan.CustomFat.HasValue
                     };
@@ -251,7 +301,12 @@ namespace KontrolaNawykow.Controllers
                     return BadRequest("Brak danych posiłku");
                 }
 
-                var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+                var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
+                {
+                    return Unauthorized("Nie można zidentyfikować użytkownika");
+                }
+
                 var mealPlan = await _context.MealPlans
                     .Include(mp => mp.PlanPosilkowPrzepisy)
                     .FirstOrDefaultAsync(mp => mp.Id == id && mp.UserId == userId);
@@ -266,9 +321,20 @@ namespace KontrolaNawykow.Controllers
 
                 try
                 {
+                    // Parse date and meal type safely
+                    if (!DateTime.TryParse(mealPlanDto.Date, out DateTime parsedDate))
+                    {
+                        return BadRequest("Nieprawidłowy format daty");
+                    }
+
+                    if (!Enum.TryParse<MealType>(mealPlanDto.MealType, out MealType parsedMealType))
+                    {
+                        return BadRequest("Nieprawidłowy typ posiłku");
+                    }
+
                     // Update basic properties
-                    mealPlan.Date = DateTime.Parse(mealPlanDto.Date);
-                    mealPlan.MealType = (MealType)Enum.Parse(typeof(MealType), mealPlanDto.MealType);
+                    mealPlan.Date = parsedDate;
+                    mealPlan.MealType = parsedMealType;
                     mealPlan.CustomEntry = mealPlanDto.CustomEntry ?? mealPlan.CustomEntry;
                     mealPlan.Gramature = mealPlanDto.Gramature ?? mealPlan.Gramature;
 
@@ -282,7 +348,7 @@ namespace KontrolaNawykow.Controllers
                     mealPlan.RecipeId = mealPlanDto.RecipeId;
 
                     // Handle recipe changes via join table
-                    var existingRelation = mealPlan.PlanPosilkowPrzepisy.FirstOrDefault();
+                    var existingRelation = mealPlan.PlanPosilkowPrzepisy?.FirstOrDefault();
 
                     // If we have a recipeId in the dto
                     if (mealPlanDto.RecipeId.HasValue)
@@ -335,6 +401,7 @@ namespace KontrolaNawykow.Controllers
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"Error in PutMealPlan: {ex.Message}");
                 return StatusCode(500, $"Błąd podczas aktualizacji posiłku: {ex.Message}");
             }
         }
@@ -345,7 +412,12 @@ namespace KontrolaNawykow.Controllers
         {
             try
             {
-                var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+                var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
+                {
+                    return Unauthorized("Nie można zidentyfikować użytkownika");
+                }
+
                 var mealPlan = await _context.MealPlans
                     .FirstOrDefaultAsync(mp => mp.Id == id && mp.UserId == userId);
 
@@ -361,6 +433,7 @@ namespace KontrolaNawykow.Controllers
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"Error in MarkMealEaten: {ex.Message}");
                 return StatusCode(500, $"Błąd podczas oznaczania posiłku jako zjedzonego: {ex.Message}");
             }
         }
@@ -371,7 +444,12 @@ namespace KontrolaNawykow.Controllers
         {
             try
             {
-                var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+                var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
+                {
+                    return Unauthorized("Nie można zidentyfikować użytkownika");
+                }
+
                 var mealPlan = await _context.MealPlans
                     .FirstOrDefaultAsync(mp => mp.Id == id && mp.UserId == userId);
 
@@ -387,6 +465,7 @@ namespace KontrolaNawykow.Controllers
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"Error in UnmarkMealEaten: {ex.Message}");
                 return StatusCode(500, $"Błąd podczas oznaczania posiłku jako niezjedzonego: {ex.Message}");
             }
         }
@@ -397,7 +476,12 @@ namespace KontrolaNawykow.Controllers
         {
             try
             {
-                var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+                var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
+                {
+                    return Unauthorized("Nie można zidentyfikować użytkownika");
+                }
+
                 var mealPlan = await _context.MealPlans
                     .Include(mp => mp.PlanPosilkowPrzepisy)
                     .FirstOrDefaultAsync(mp => mp.Id == id && mp.UserId == userId);
@@ -443,6 +527,7 @@ namespace KontrolaNawykow.Controllers
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"Error in DeleteMealPlan: {ex.Message}");
                 return StatusCode(500, $"Błąd podczas usuwania posiłku: {ex.Message}");
             }
         }

@@ -219,9 +219,21 @@ namespace KontrolaNawykow.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<int?>("CustomCalories")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<float?>("CustomCarbs")
+                        .HasColumnType("REAL");
+
                     b.Property<string>("CustomEntry")
                         .IsRequired()
                         .HasColumnType("TEXT");
+
+                    b.Property<float?>("CustomFat")
+                        .HasColumnType("REAL");
+
+                    b.Property<float?>("CustomProtein")
+                        .HasColumnType("REAL");
 
                     b.Property<DateTime?>("Date")
                         .HasColumnType("TEXT");

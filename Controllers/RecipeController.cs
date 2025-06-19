@@ -32,15 +32,24 @@ namespace KontrolaNawykow.Controllers
         {
             try
             {
-                var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
-                return await _context.Recipes
+                var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
+                {
+                    return Unauthorized("Nie można zidentyfikować użytkownika");
+                }
+
+                var recipes = await _context.Recipes
                     .Where(r => r.UserId == userId || r.IsPublic)
                     .Include(r => r.RecipeIngredients)
                         .ThenInclude(ri => ri.Ingredient)
+                    .Include(r => r.Ratings)
                     .ToListAsync();
+
+                return Ok(recipes);
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"Error in GetRecipes: {ex.Message}");
                 return StatusCode(500, $"Błąd podczas pobierania przepisów: {ex.Message}");
             }
         }
@@ -53,13 +62,18 @@ namespace KontrolaNawykow.Controllers
 
             try
             {
-                var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+                var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
+                {
+                    return Unauthorized("Nie można zidentyfikować użytkownika");
+                }
+
                 Console.WriteLine($"User ID: {userId}");
 
                 var recipe = await _context.Recipes
                     .Include(r => r.RecipeIngredients)
                         .ThenInclude(ri => ri.Ingredient)
-                    .Include(r => r.Ratings) // Dodaj oceny
+                    .Include(r => r.Ratings)
                     .FirstOrDefaultAsync(r => r.Id == id && (r.UserId == userId || r.IsPublic));
 
                 if (recipe == null)
@@ -86,85 +100,228 @@ namespace KontrolaNawykow.Controllers
         {
             try
             {
-                var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+                Console.WriteLine("=== PostRecipe started ===");
 
-                var recipe = new Recipe
+                // Debug wszystkich otrzymanych danych
+                Console.WriteLine("=== RECEIVED FORM DATA ===");
+                foreach (var key in Request.Form.Keys)
                 {
-                    Name = recipeDto.Name,
-                    Instructions = recipeDto.Instructions,
-                    Calories = recipeDto.Calories,
-                    Protein = recipeDto.Protein,
-                    Fat = recipeDto.Fat,
-                    Carbs = recipeDto.Carbs,
-                    IsPublic = recipeDto.IsPublic,
-                    UserId = userId
-                };
+                    Console.WriteLine($"Form key: {key} = {Request.Form[key]}");
+                }
 
-                // Obsługa obrazu
-                if (image != null && image.Length > 0)
+                if (Request.Form.Files.Any())
                 {
-                    using (var memoryStream = new MemoryStream())
+                    foreach (var file in Request.Form.Files)
                     {
-                        await image.CopyToAsync(memoryStream);
-                        recipe.ImageData = memoryStream.ToArray();
+                        Console.WriteLine($"File: {file.Name} = {file.FileName} ({file.Length} bytes)");
                     }
                 }
 
-                // Dodawanie składników do przepisu
-                if (!string.IsNullOrEmpty(recipeDto.RecipeIngredients))
+                Console.WriteLine($"RecipeDto object: Name={recipeDto?.Name}, Calories={recipeDto?.Calories}, Protein={recipeDto?.Protein}");
+                Console.WriteLine($"Image parameter: {image?.FileName} ({image?.Length} bytes)");
+
+                var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
                 {
-                    try
+                    return Unauthorized("Nie można zidentyfikować użytkownika");
+                }
+
+                // Validation
+                if (recipeDto == null)
+                {
+                    Console.WriteLine("ERROR: recipeDto is null");
+                    return BadRequest("Brak danych przepisu");
+                }
+
+                // Debug ModelState
+                if (!ModelState.IsValid)
+                {
+                    Console.WriteLine("=== MODEL STATE ERRORS ===");
+                    foreach (var modelState in ModelState)
                     {
-                        var ingredientsData = JsonSerializer.Deserialize<List<RecipeIngredientDto>>(recipeDto.RecipeIngredients);
-
-                        if (ingredientsData != null && ingredientsData.Count > 0)
+                        foreach (var error in modelState.Value.Errors)
                         {
-                            // Filtrownie nieprawidłowych ID składników
-                            ingredientsData = ingredientsData.Where(ing => ing.IngredientId > 0).ToList();
-
-                            if (ingredientsData.Count == 0)
-                            {
-                                return BadRequest("Błąd: Wszystkie składniki miały nieprawidłowe ID. Sprawdź czy wybrano prawidłowe składniki z listy.");
-                            }
-
-                            recipe.RecipeIngredients = new List<RecipeIngredient>();
-
-                            foreach (var ingredient in ingredientsData)
-                            {
-                                // Sprawdź czy składnik istnieje w bazie danych
-                                var ingredientExists = await _context.Ingredients.AnyAsync(i => i.Id == ingredient.IngredientId);
-                                if (!ingredientExists)
-                                {
-                                    return BadRequest($"Błąd: Składnik o ID {ingredient.IngredientId} nie istnieje w bazie danych.");
-                                }
-
-                                recipe.RecipeIngredients.Add(new RecipeIngredient
-                                {
-                                    IngredientId = ingredient.IngredientId,
-                                    Amount = ingredient.Amount
-                                });
-                            }
+                            Console.WriteLine($"Field: {modelState.Key}, Error: {error.ErrorMessage}");
                         }
                     }
-                    catch (Exception ex)
-                    {
-                        return BadRequest($"Błąd podczas przetwarzania składników: {ex.Message}");
-                    }
+                    return BadRequest(ModelState);
                 }
 
-                _context.Recipes.Add(recipe);
-                await _context.SaveChangesAsync();
+                if (string.IsNullOrWhiteSpace(recipeDto.Name))
+                {
+                    Console.WriteLine("ERROR: Recipe name is empty");
+                    return BadRequest("Nazwa przepisu jest wymagana");
+                }
 
-                // Załaduj przepis z relacjami
-                var savedRecipe = await _context.Recipes
-                    .Include(r => r.RecipeIngredients)
-                    .ThenInclude(ri => ri.Ingredient)
-                    .FirstOrDefaultAsync(r => r.Id == recipe.Id);
+                if (recipeDto.Calories < 0 || recipeDto.Calories > 9999)
+                {
+                    Console.WriteLine($"ERROR: Invalid calories: {recipeDto.Calories}");
+                    return BadRequest("Kalorie muszą być między 0 a 9999");
+                }
 
-                return CreatedAtAction(nameof(GetRecipe), new { id = recipe.Id }, savedRecipe);
+                if (recipeDto.Protein < 0 || recipeDto.Protein > 100)
+                {
+                    Console.WriteLine($"ERROR: Invalid protein: {recipeDto.Protein}");
+                    return BadRequest("Białko musi być między 0 a 100g");
+                }
+
+                if (recipeDto.Carbs < 0 || recipeDto.Carbs > 100)
+                {
+                    Console.WriteLine($"ERROR: Invalid carbs: {recipeDto.Carbs}");
+                    return BadRequest("Węglowodany muszą być między 0 a 100g");
+                }
+
+                if (recipeDto.Fat < 0 || recipeDto.Fat > 100)
+                {
+                    Console.WriteLine($"ERROR: Invalid fat: {recipeDto.Fat}");
+                    return BadRequest("Tłuszcze muszą być między 0 a 100g");
+                }
+
+                using var transaction = await _context.Database.BeginTransactionAsync();
+                Console.WriteLine("Transaction started");
+
+                try
+                {
+                    var recipe = new Recipe
+                    {
+                        Name = recipeDto.Name.Trim(),
+                        Instructions = recipeDto.Instructions?.Trim() ?? string.Empty,
+                        Calories = recipeDto.Calories,
+                        Protein = recipeDto.Protein,
+                        Fat = recipeDto.Fat,
+                        Carbs = recipeDto.Carbs,
+                        IsPublic = recipeDto.IsPublic,
+                        UserId = userId
+                    };
+
+                    Console.WriteLine("Recipe object created successfully");
+
+                    // Obsługa obrazu
+                    if (image != null && image.Length > 0)
+                    {
+                        Console.WriteLine($"Processing image: {image.FileName}, Size: {image.Length}");
+
+                        // Sprawdź typ pliku
+                        var allowedTypes = new[] { "image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp" };
+                        if (!allowedTypes.Contains(image.ContentType.ToLower()))
+                        {
+                            Console.WriteLine($"Invalid image type: {image.ContentType}");
+                            return BadRequest("Dozwolone są tylko pliki obrazów (JPG, PNG, GIF, WebP).");
+                        }
+
+                        // Sprawdź rozmiar pliku (max 5MB)
+                        if (image.Length > 5 * 1024 * 1024)
+                        {
+                            Console.WriteLine($"Image too large: {image.Length} bytes");
+                            return BadRequest("Plik nie może być większy niż 5MB.");
+                        }
+
+                        using (var memoryStream = new MemoryStream())
+                        {
+                            await image.CopyToAsync(memoryStream);
+                            recipe.ImageData = memoryStream.ToArray();
+                        }
+
+                        Console.WriteLine("Image processed successfully");
+                    }
+                    else
+                    {
+                        Console.WriteLine("No image provided");
+                    }
+
+                    // Dodaj przepis do bazy
+                    _context.Recipes.Add(recipe);
+                    await _context.SaveChangesAsync();
+
+                    Console.WriteLine($"Recipe saved with ID: {recipe.Id}");
+
+                    // Przetwórz składniki
+                    if (!string.IsNullOrEmpty(recipeDto.RecipeIngredients))
+                    {
+                        Console.WriteLine($"Processing ingredients JSON: {recipeDto.RecipeIngredients}");
+
+                        try
+                        {
+                            var ingredientsData = JsonSerializer.Deserialize<List<RecipeIngredientDto>>(recipeDto.RecipeIngredients);
+                            Console.WriteLine($"Parsed {ingredientsData?.Count ?? 0} ingredients");
+
+                            if (ingredientsData != null && ingredientsData.Count > 0)
+                            {
+                                // Filtruj nieprawidłowe składniki
+                                var validIngredients = ingredientsData
+                                    .Where(ing => ing.IngredientId > 0 && ing.Amount > 0)
+                                    .ToList();
+
+                                Console.WriteLine($"Valid ingredients: {validIngredients.Count}");
+
+                                foreach (var ingredient in validIngredients)
+                                {
+                                    Console.WriteLine($"Processing ingredient: ID={ingredient.IngredientId}, Amount={ingredient.Amount}");
+
+                                    // Sprawdź czy składnik istnieje w bazie
+                                    var ingredientExists = await _context.Ingredients
+                                        .AnyAsync(i => i.Id == ingredient.IngredientId);
+
+                                    if (!ingredientExists)
+                                    {
+                                        Console.WriteLine($"Ingredient with ID {ingredient.IngredientId} does not exist");
+                                        await transaction.RollbackAsync();
+                                        return BadRequest($"Składnik o ID {ingredient.IngredientId} nie istnieje w bazie danych.");
+                                    }
+
+                                    var recipeIngredient = new RecipeIngredient
+                                    {
+                                        RecipeId = recipe.Id,
+                                        IngredientId = ingredient.IngredientId,
+                                        Amount = ingredient.Amount
+                                    };
+
+                                    _context.RecipeIngredients.Add(recipeIngredient);
+                                    Console.WriteLine($"Added ingredient: ID={ingredient.IngredientId}, Amount={ingredient.Amount}");
+                                }
+
+                                await _context.SaveChangesAsync();
+                                Console.WriteLine("All ingredients saved successfully");
+                            }
+                        }
+                        catch (JsonException ex)
+                        {
+                            Console.WriteLine($"JSON parsing error: {ex.Message}");
+                            await transaction.RollbackAsync();
+                            return BadRequest("Błąd podczas przetwarzania składników. Sprawdź format danych.");
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine("No ingredients JSON provided");
+                    }
+
+                    // Zatwierdź transakcję
+                    await transaction.CommitAsync();
+                    Console.WriteLine("Transaction committed successfully");
+
+                    // Załaduj przepis z relacjami
+                    var savedRecipe = await _context.Recipes
+                        .Include(r => r.RecipeIngredients)
+                        .ThenInclude(ri => ri.Ingredient)
+                        .FirstOrDefaultAsync(r => r.Id == recipe.Id);
+
+                    Console.WriteLine("=== PostRecipe completed successfully ===");
+
+                    return CreatedAtAction(nameof(GetRecipe), new { id = recipe.Id }, savedRecipe);
+                }
+                catch (Exception innerEx)
+                {
+                    Console.WriteLine($"Error in transaction: {innerEx.Message}");
+                    Console.WriteLine($"Stack trace: {innerEx.StackTrace}");
+                    await transaction.RollbackAsync();
+                    throw;
+                }
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"Error in PostRecipe: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
                 return StatusCode(500, $"Błąd podczas dodawania przepisu: {ex.Message}");
             }
         }
@@ -176,7 +333,12 @@ namespace KontrolaNawykow.Controllers
         {
             try
             {
-                var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+                var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
+                {
+                    return Unauthorized("Nie można zidentyfikować użytkownika");
+                }
+
                 var existingRecipe = await _context.Recipes
                     .Include(r => r.RecipeIngredients)
                     .FirstOrDefaultAsync(r => r.Id == id && r.UserId == userId);
@@ -216,25 +378,23 @@ namespace KontrolaNawykow.Controllers
                         if (existingRecipe.RecipeIngredients != null && existingRecipe.RecipeIngredients.Any())
                         {
                             _context.RecipeIngredients.RemoveRange(existingRecipe.RecipeIngredients);
-                            await _context.SaveChangesAsync(); // Zapisz zmiany przed dodaniem nowych składników
+                            await _context.SaveChangesAsync();
                         }
 
                         // Dodaj nowe składniki
                         if (ingredientsData != null && ingredientsData.Count > 0)
                         {
-                            // Filtruj nieprawidłowe ID składników
-                            ingredientsData = ingredientsData.Where(ing => ing.IngredientId > 0).ToList();
+                            var validIngredients = ingredientsData.Where(ing => ing.IngredientId > 0).ToList();
 
-                            if (ingredientsData.Count == 0)
+                            if (validIngredients.Count == 0)
                             {
-                                return BadRequest("Błąd: Wszystkie składniki miały nieprawidłowe ID. Sprawdź czy wybrano prawidłowe składniki z listy.");
+                                return BadRequest("Błąd: Wszystkie składniki miały nieprawidłowe ID.");
                             }
 
                             existingRecipe.RecipeIngredients = new List<RecipeIngredient>();
 
-                            foreach (var ingredient in ingredientsData)
+                            foreach (var ingredient in validIngredients)
                             {
-                                // Sprawdź czy składnik istnieje w bazie danych
                                 var ingredientExists = await _context.Ingredients.AnyAsync(i => i.Id == ingredient.IngredientId);
                                 if (!ingredientExists)
                                 {
@@ -256,7 +416,6 @@ namespace KontrolaNawykow.Controllers
                     }
                 }
 
-                // Zapisz zmiany
                 try
                 {
                     await _context.SaveChangesAsync();
@@ -277,6 +436,7 @@ namespace KontrolaNawykow.Controllers
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"Error in PutRecipe: {ex.Message}");
                 return StatusCode(500, $"Błąd podczas aktualizacji przepisu: {ex.Message}");
             }
         }
@@ -287,7 +447,12 @@ namespace KontrolaNawykow.Controllers
         {
             try
             {
-                var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+                var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
+                {
+                    return Unauthorized("Nie można zidentyfikować użytkownika");
+                }
+
                 var recipe = await _context.Recipes
                     .Include(r => r.RecipeIngredients)
                     .FirstOrDefaultAsync(r => r.Id == id && r.UserId == userId);
@@ -310,74 +475,8 @@ namespace KontrolaNawykow.Controllers
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"Error in DeleteRecipe: {ex.Message}");
                 return StatusCode(500, $"Błąd podczas usuwania przepisu: {ex.Message}");
-            }
-        }
-
-        // POST: api/recipe/5/ingredients
-        [HttpPost("{id}/ingredients")]
-        public async Task<ActionResult<RecipeIngredient>> AddIngredient(int id, RecipeIngredientDto ingredientDto)
-        {
-            try
-            {
-                var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
-                var recipe = await _context.Recipes
-                    .FirstOrDefaultAsync(r => r.Id == id && r.UserId == userId);
-
-                if (recipe == null)
-                {
-                    return NotFound($"Nie znaleziono przepisu o ID {id}");
-                }
-
-                // Sprawdź czy składnik istnieje
-                var ingredientExists = await _context.Ingredients.AnyAsync(i => i.Id == ingredientDto.IngredientId);
-                if (!ingredientExists)
-                {
-                    return BadRequest($"Błąd: Składnik o ID {ingredientDto.IngredientId} nie istnieje w bazie danych.");
-                }
-
-                var recipeIngredient = new RecipeIngredient
-                {
-                    RecipeId = id,
-                    IngredientId = ingredientDto.IngredientId,
-                    Amount = ingredientDto.Amount
-                };
-
-                _context.RecipeIngredients.Add(recipeIngredient);
-                await _context.SaveChangesAsync();
-
-                return Ok(recipeIngredient);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Błąd podczas dodawania składnika do przepisu: {ex.Message}");
-            }
-        }
-
-        // DELETE: api/recipe/ingredients/5
-        [HttpDelete("ingredients/{id}")]
-        public async Task<IActionResult> DeleteIngredient(int id)
-        {
-            try
-            {
-                var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
-                var recipeIngredient = await _context.RecipeIngredients
-                    .Include(ri => ri.Recipe)
-                    .FirstOrDefaultAsync(ri => ri.Id == id && ri.Recipe.UserId == userId);
-
-                if (recipeIngredient == null)
-                {
-                    return NotFound($"Nie znaleziono składnika o ID {id}");
-                }
-
-                _context.RecipeIngredients.Remove(recipeIngredient);
-                await _context.SaveChangesAsync();
-
-                return NoContent();
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Błąd podczas usuwania składnika: {ex.Message}");
             }
         }
 
@@ -389,7 +488,11 @@ namespace KontrolaNawykow.Controllers
 
             try
             {
-                var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+                var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
+                {
+                    return Unauthorized("Nie można zidentyfikować użytkownika");
+                }
 
                 // Sprawdź czy przepis istnieje i użytkownik ma do niego dostęp
                 var recipe = await _context.Recipes
@@ -459,7 +562,11 @@ namespace KontrolaNawykow.Controllers
         {
             try
             {
-                var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+                var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
+                {
+                    return Unauthorized("Nie można zidentyfikować użytkownika");
+                }
 
                 // Pobierz ocenę użytkownika dla tego przepisu
                 var userRating = await _context.RecipeRatings
@@ -494,7 +601,7 @@ namespace KontrolaNawykow.Controllers
         }
     }
 
-    // DTO klasy - muszą być poza klasą kontrolera
+    // DTO klasy
     public class RecipeDto
     {
         public string Name { get; set; }

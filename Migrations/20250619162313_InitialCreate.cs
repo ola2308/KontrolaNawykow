@@ -339,7 +339,11 @@ namespace KontrolaNawykow.Migrations
                     RecipeId = table.Column<int>(type: "INTEGER", nullable: true),
                     CustomEntry = table.Column<string>(type: "TEXT", nullable: false),
                     Eaten = table.Column<bool>(type: "INTEGER", nullable: false),
-                    Gramature = table.Column<float>(type: "REAL", nullable: true)
+                    Gramature = table.Column<float>(type: "REAL", nullable: true),
+                    CustomCalories = table.Column<int>(type: "INTEGER", nullable: true),
+                    CustomProtein = table.Column<float>(type: "REAL", nullable: true),
+                    CustomCarbs = table.Column<float>(type: "REAL", nullable: true),
+                    CustomFat = table.Column<float>(type: "REAL", nullable: true)
                 },
                 constraints: table =>
                 {

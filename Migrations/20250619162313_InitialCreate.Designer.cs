@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace KontrolaNawykow.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250619133724_InitialCreate")]
+    [Migration("20250619162313_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -222,9 +222,21 @@ namespace KontrolaNawykow.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<int?>("CustomCalories")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<float?>("CustomCarbs")
+                        .HasColumnType("REAL");
+
                     b.Property<string>("CustomEntry")
                         .IsRequired()
                         .HasColumnType("TEXT");
+
+                    b.Property<float?>("CustomFat")
+                        .HasColumnType("REAL");
+
+                    b.Property<float?>("CustomProtein")
+                        .HasColumnType("REAL");
 
                     b.Property<DateTime?>("Date")
                         .HasColumnType("TEXT");

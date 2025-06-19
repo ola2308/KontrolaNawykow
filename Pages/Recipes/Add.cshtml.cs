@@ -77,28 +77,38 @@ namespace KontrolaNawykow.Pages.Recipes
             try
             {
                 Console.WriteLine("=== POST Recipe Add started ===");
+                Console.WriteLine($"ModelState.IsValid: {ModelState.IsValid}");
 
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
                 if (string.IsNullOrEmpty(userId))
                 {
+                    Console.WriteLine("User not authenticated");
                     return RedirectToPage("/Account/Login");
                 }
 
+                Console.WriteLine($"User ID: {userId}");
+
                 // Debugowanie danych formularza
-                Console.WriteLine($"Name: {Name}");
+                Console.WriteLine($"Name: '{Name}'");
                 Console.WriteLine($"Calories: {Calories}");
                 Console.WriteLine($"Protein: {Protein}");
                 Console.WriteLine($"Carbs: {Carbs}");
                 Console.WriteLine($"Fat: {Fat}");
                 Console.WriteLine($"IsPublic: {IsPublic}");
-                Console.WriteLine($"RecipeIngredients: {RecipeIngredients}");
+                Console.WriteLine($"Instructions length: {Instructions?.Length ?? 0}");
+                Console.WriteLine($"Image: {Image?.FileName ?? "null"} ({Image?.Length ?? 0} bytes)");
+                Console.WriteLine($"RecipeIngredients: '{RecipeIngredients}'");
 
+                // Debug ModelState errors
                 if (!ModelState.IsValid)
                 {
-                    Console.WriteLine("ModelState is invalid:");
-                    foreach (var error in ModelState.Values.SelectMany(v => v.Errors))
+                    Console.WriteLine("ModelState errors:");
+                    foreach (var modelState in ModelState)
                     {
-                        Console.WriteLine($"- {error.ErrorMessage}");
+                        foreach (var error in modelState.Value.Errors)
+                        {
+                            Console.WriteLine($"- {modelState.Key}: {error.ErrorMessage}");
+                        }
                     }
                     ErrorMessage = "Proszê poprawiæ b³êdy w formularzu.";
                     return Page();
@@ -106,6 +116,7 @@ namespace KontrolaNawykow.Pages.Recipes
 
                 // Rozpocznij transakcjê
                 using var transaction = await _context.Database.BeginTransactionAsync();
+                Console.WriteLine("Transaction started");
 
                 try
                 {
@@ -122,22 +133,26 @@ namespace KontrolaNawykow.Pages.Recipes
                         UserId = int.Parse(userId)
                     };
 
+                    Console.WriteLine("Recipe object created");
+
                     // Obs³uga obrazu
                     if (Image != null && Image.Length > 0)
                     {
                         Console.WriteLine($"Processing image: {Image.FileName}, Size: {Image.Length}");
 
                         // SprawdŸ typ pliku
-                        var allowedTypes = new[] { "image/jpeg", "image/jpg", "image/png", "image/gif" };
+                        var allowedTypes = new[] { "image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp" };
                         if (!allowedTypes.Contains(Image.ContentType.ToLower()))
                         {
-                            ErrorMessage = "Dozwolone s¹ tylko pliki obrazów (JPG, PNG, GIF).";
+                            Console.WriteLine($"Invalid image type: {Image.ContentType}");
+                            ErrorMessage = "Dozwolone s¹ tylko pliki obrazów (JPG, PNG, GIF, WebP).";
                             return Page();
                         }
 
                         // SprawdŸ rozmiar pliku (max 5MB)
                         if (Image.Length > 5 * 1024 * 1024)
                         {
+                            Console.WriteLine($"Image too large: {Image.Length} bytes");
                             ErrorMessage = "Plik nie mo¿e byæ wiêkszy ni¿ 5MB.";
                             return Page();
                         }
@@ -149,6 +164,10 @@ namespace KontrolaNawykow.Pages.Recipes
                         }
 
                         Console.WriteLine("Image processed successfully");
+                    }
+                    else
+                    {
+                        Console.WriteLine("No image provided");
                     }
 
                     // Dodaj przepis do bazy
@@ -176,8 +195,18 @@ namespace KontrolaNawykow.Pages.Recipes
 
                                 Console.WriteLine($"Valid ingredients: {validIngredients.Count}");
 
+                                if (validIngredients.Count == 0)
+                                {
+                                    Console.WriteLine("No valid ingredients found");
+                                    await transaction.RollbackAsync();
+                                    ErrorMessage = "Nie znaleziono prawid³owych sk³adników. Dodaj przynajmniej jeden sk³adnik z iloœci¹.";
+                                    return Page();
+                                }
+
                                 foreach (var ingredient in validIngredients)
                                 {
+                                    Console.WriteLine($"Processing ingredient: ID={ingredient.IngredientId}, Amount={ingredient.Amount}");
+
                                     // SprawdŸ czy sk³adnik istnieje w bazie
                                     var ingredientExists = await _context.Ingredients
                                         .AnyAsync(i => i.Id == ingredient.IngredientId);
@@ -204,14 +233,22 @@ namespace KontrolaNawykow.Pages.Recipes
                                 await _context.SaveChangesAsync();
                                 Console.WriteLine("All ingredients saved successfully");
                             }
+                            else
+                            {
+                                Console.WriteLine("No ingredients data provided");
+                            }
                         }
                         catch (JsonException ex)
                         {
                             Console.WriteLine($"JSON parsing error: {ex.Message}");
                             await transaction.RollbackAsync();
-                            ErrorMessage = "B³¹d podczas przetwarzania sk³adników. Spróbuj ponownie.";
+                            ErrorMessage = "B³¹d podczas przetwarzania sk³adników. SprawdŸ format danych.";
                             return Page();
                         }
+                    }
+                    else
+                    {
+                        Console.WriteLine("No ingredients JSON provided");
                     }
 
                     // ZatwierdŸ transakcjê
@@ -230,7 +267,9 @@ namespace KontrolaNawykow.Pages.Recipes
                     IsPublic = false;
                     RecipeIngredients = string.Empty;
 
-                    return Page();
+                    // Redirect to diet page to see the new recipe
+                    TempData["SuccessMessage"] = SuccessMessage;
+                    return RedirectToPage("/Diet/Index");
                 }
                 catch (Exception innerEx)
                 {
