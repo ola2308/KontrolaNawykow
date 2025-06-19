@@ -5,7 +5,6 @@
     ViewData["NoFooter"] = true;
     Layout = null;
 }
-
 <!DOCTYPE html>
 <html lang="pl">
 <head>
@@ -98,18 +97,22 @@
             box-shadow: 0 0 0 2px rgba(255, 105, 180, 0.2);
         }
 
-        .goals-container {
+        .goals-container,
+        .activity-options,
+        .work-options {
             display: flex;
             flex-wrap: wrap;
             gap: 10px;
             margin-bottom: 1.5rem;
         }
 
-        .goal-radio {
+        .goal-radio,
+        .option-radio {
             display: none;
         }
 
-        .goal-label {
+        .goal-label,
+        .option-label {
             display: flex;
             align-items: center;
             padding: 0.5rem 1rem;
@@ -134,29 +137,6 @@
         .goal-radio:checked + .goal-label:before {
             content: "♥";
             color: #ff69b4;
-        }
-
-        .activity-options, .work-options {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-bottom: 1.5rem;
-        }
-
-        .option-radio {
-            display: none;
-        }
-
-        .option-label {
-            flex: 1;
-            min-width: 110px;
-            text-align: center;
-            padding: 0.5rem;
-            background-color: #f8f8f8;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: all 0.2s;
         }
 
         .option-radio:checked + .option-label {
@@ -199,7 +179,6 @@
             border: 1px solid #c3e6cb;
         }
 
-        /* Responsywność */
         @@media (max-width: 768px) {
             .container {
                 flex-direction: column;
@@ -210,10 +189,9 @@
             }
         }
 
-        /* Stylizacja select */
         select.form-control {
             appearance: none;
-            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23333' viewBox='0 0 16 16'%3e%3cpath d='M8 12.6a.8.8 0 0 1-.44-.13l-6-4a.8.8 0 1 1 .88-1.34L8 10.74l5.56-3.6a.8.8 0 1 1 .88 1.33l-6 4A.8.8 0 0 1 8 12.6z'/%3e%3c/svg%3e");
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23333' viewBox='0 0 16 16'%3e%3cpath d='M8 12.6a.8.8 0 0 1-.44-.13l-6-4a.8.8 0 1 1 .88-1.34L8 10.74l5.56-3.6a.8.8 0 1 1 .88 1.33l-6 4A.8.8 0 0 1 8 12.6z'/%3e%3c/svg%3e");
             background-repeat: no-repeat;
             background-position: right 0.75rem center;
             background-size: 16px 12px;
@@ -228,41 +206,49 @@
                 <h1>Cześć, @Model.UserName!</h1>
 
                 <div class="welcome-message">
-                    Fajnie, że podejmujesz się z nami wyzwanie "Kontrola Nawyków"!
+                    Fajnie, że podejmujesz się z nami wyzwania "Kontrola Nawyków"!
                 </div>
 
                 @if (!string.IsNullOrEmpty(Model.SuccessMessage))
                 {
-                    <div class="alert alert-success">
-                        @Model.SuccessMessage
-                    </div>
+                    <div class="alert alert-success">@Model.SuccessMessage</div>
                 }
-
                 @if (!string.IsNullOrEmpty(Model.ErrorMessage))
                 {
-                    <div class="alert">
-                        @Model.ErrorMessage
-                    </div>
+                    <div class="alert">@Model.ErrorMessage</div>
                 }
 
-                <form method="post">
+                <form method="post" id="setupForm">
+                    @Html.AntiForgeryToken()
+                    
                     <div class="form-group">
                         <label>Cel:</label>
                         <div class="goals-container">
-                            <input type="radio" id="goal1" class="goal-radio" name="Cel" value="ZdroweNawyki" asp-for="Cel" />
+                            <input type="radio" id="goal1" class="goal-radio" name="Cel" value="ZdroweNawyki" />
                             <label for="goal1" class="goal-label">Zdobycie zdrowych nawyków</label>
 
-                            <input type="radio" id="goal2" class="goal-radio" name="Cel" value="Schudniecie" asp-for="Cel" />
+                            <input type="radio" id="goal2" class="goal-radio" name="Cel" value="Schudniecie" />
                             <label for="goal2" class="goal-label">Schudnięcie</label>
 
-                            <input type="radio" id="goal3" class="goal-radio" name="Cel" value="PrzybranieMasy" asp-for="Cel" />
+                            <input type="radio" id="goal3" class="goal-radio" name="Cel" value="PrzybranieMasy" />
                             <label for="goal3" class="goal-label">Przybranie na masie</label>
                         </div>
                     </div>
 
                     <div class="form-group">
+                        <label>Płeć:</label>
+                        <div class="work-options">
+                            <input type="radio" id="gender1" class="option-radio" name="Plec" value="Mezczyzna" />
+                            <label for="gender1" class="option-label">👨 Mężczyzna</label>
+
+                            <input type="radio" id="gender2" class="option-radio" name="Plec" value="Kobieta" />
+                            <label for="gender2" class="option-label">👩 Kobieta</label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
                         <label for="wiek">Wiek:</label>
-                        <select id="wiek" class="form-control" asp-for="Wiek">
+                        <select id="wiek" class="form-control" name="Wiek">
                             <option value="">Wybierz wiek</option>
                             @for (int i = 16; i <= 80; i++)
                             {
@@ -273,38 +259,38 @@
 
                     <div class="form-group">
                         <label for="waga">Waga (kg):</label>
-                        <input type="number" id="waga" class="form-control" asp-for="Waga" step="0.1" min="30" max="250" placeholder="np. 70.5" />
+                        <input type="number" id="waga" class="form-control" name="Waga" step="0.1" min="30" max="250" placeholder="np. 70.5" />
                     </div>
 
                     <div class="form-group">
                         <label for="wzrost">Wzrost (cm):</label>
-                        <input type="number" id="wzrost" class="form-control" asp-for="Wzrost" step="1" min="120" max="240" placeholder="np. 175" />
+                        <input type="number" id="wzrost" class="form-control" name="Wzrost" step="1" min="120" max="240" placeholder="np. 175" />
                     </div>
 
                     <div class="form-group">
                         <label>Aktywność fizyczna:</label>
                         <div class="activity-options">
-                            <input type="radio" id="activity1" class="option-radio" name="AktywnoscFizyczna" value="0 treningów tygodniowo" asp-for="AktywnoscFizyczna" />
+                            <input type="radio" id="activity1" class="option-radio" name="AktywnoscFizyczna" value="0 treningów tygodniowo" />
                             <label for="activity1" class="option-label">0 treningów tygodniowo</label>
 
-                            <input type="radio" id="activity2" class="option-radio" name="AktywnoscFizyczna" value="1-3 treningów tygodniowo" asp-for="AktywnoscFizyczna" />
-                            <label for="activity2" class="option-label">1-3 treningów tygodniowo</label>
+                            <input type="radio" id="activity2" class="option-radio" name="AktywnoscFizyczna" value="1-3 treningów tygodniowo" />
+                            <label for="activity2" class="option-label">1-3 treningi</label>
 
-                            <input type="radio" id="activity3" class="option-radio" name="AktywnoscFizyczna" value="4-5 treningów tygodniowo" asp-for="AktywnoscFizyczna" />
-                            <label for="activity3" class="option-label">4-5 treningów tygodniowo</label>
+                            <input type="radio" id="activity3" class="option-radio" name="AktywnoscFizyczna" value="4-5 treningów tygodniowo" />
+                            <label for="activity3" class="option-label">4-5 treningów</label>
                         </div>
                     </div>
 
                     <div class="form-group">
                         <label>Rodzaj pracy:</label>
                         <div class="work-options">
-                            <input type="radio" id="work1" class="option-radio" name="RodzajPracy" value="Fizyczna" asp-for="RodzajPracy" />
+                            <input type="radio" id="work1" class="option-radio" name="RodzajPracy" value="Fizyczna" />
                             <label for="work1" class="option-label">Fizyczna</label>
 
-                            <input type="radio" id="work2" class="option-radio" name="RodzajPracy" value="Siedząca" asp-for="RodzajPracy" />
+                            <input type="radio" id="work2" class="option-radio" name="RodzajPracy" value="Siedząca" />
                             <label for="work2" class="option-label">Siedząca</label>
 
-                            <input type="radio" id="work3" class="option-radio" name="RodzajPracy" value="Pół na pół" asp-for="RodzajPracy" />
+                            <input type="radio" id="work3" class="option-radio" name="RodzajPracy" value="Pół na pół" />
                             <label for="work3" class="option-label">Pół na pół</label>
                         </div>
                     </div>
@@ -313,10 +299,91 @@
                 </form>
             </div>
         </div>
-
         <div class="image-container">
             <img src="~/images/pierwszeDane.gif" alt="Kontrola Nawyków" />
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('=== Setup page loaded ===');
+            loadUserData();
+
+            const form = document.getElementById('setupForm');
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    // Walidacja
+                    if (!validateForm()) {
+                        return;
+                    }
+                    
+                    // Wysyłanie standardowego formularza
+                    form.submit();
+                });
+            }
+        });
+
+        function validateForm() {
+            const wiek = document.getElementById('wiek').value;
+            const waga = document.getElementById('waga').value;
+            const wzrost = document.getElementById('wzrost').value;
+            const plec = document.querySelector('input[name="Plec"]:checked');
+            const aktywnosc = document.querySelector('input[name="AktywnoscFizyczna"]:checked');
+            const praca = document.querySelector('input[name="RodzajPracy"]:checked');
+            const cel = document.querySelector('input[name="Cel"]:checked');
+
+            if (!wiek || !waga || !wzrost || !plec || !aktywnosc || !praca || !cel) {
+                showMessage('Proszę wypełnić wszystkie pola', 'error');
+                return false;
+            }
+
+            return true;
+        }
+
+        async function loadUserData() {
+            try {
+                const response = await fetch('/api/setup', {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+                if (response.ok) {
+                    const userData = await response.json();
+                    if (userData.wiek) document.getElementById('wiek').value = userData.wiek;
+                    if (userData.waga) document.getElementById('waga').value = userData.waga;
+                    if (userData.wzrost) document.getElementById('wzrost').value = userData.wzrost;
+                    if (userData.plec) {
+                        const plecRadio = document.querySelector(`input[name="Plec"][value="${userData.plec}"]`);
+                        if (plecRadio) plecRadio.checked = true;
+                    }
+                    if (userData.aktywnoscFizyczna) {
+                        const aktywnoscRadio = document.querySelector(`input[name="AktywnoscFizyczna"][value="${userData.aktywnoscFizyczna}"]`);
+                        if (aktywnoscRadio) aktywnoscRadio.checked = true;
+                    }
+                    if (userData.rodzajPracy) {
+                        const pracaRadio = document.querySelector(`input[name="RodzajPracy"][value="${userData.rodzajPracy}"]`);
+                        if (pracaRadio) pracaRadio.checked = true;
+                    }
+                    if (userData.cel) {
+                        const celRadio = document.querySelector(`input[name="Cel"][value="${userData.cel}"]`);
+                        if (celRadio) celRadio.checked = true;
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading user data:', error);
+            }
+        }
+
+        function showMessage(message, type) {
+            document.querySelectorAll('.alert').forEach(el => el.remove());
+            const alertDiv = document.createElement('div');
+            alertDiv.className = type === 'success' ? 'alert alert-success' : 'alert';
+            alertDiv.textContent = message;
+            const formContent = document.querySelector('.form-content');
+            const form = formContent.querySelector('form');
+            formContent.insertBefore(alertDiv, form);
+        }
+    </script>
 </body>
 </html>

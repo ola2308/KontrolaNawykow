@@ -1,13 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using KontrolaNawykow.Models;
 using Microsoft.EntityFrameworkCore;
+using KontrolaNawykow.Models;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace KontrolaNawykow.Pages.Diet
 {
@@ -21,303 +17,165 @@ namespace KontrolaNawykow.Pages.Diet
             _context = context;
         }
 
-        public List<DayInfo> WeekDays { get; set; }
-        public Dictionary<DateTime, List<MealPlanViewModel>> MealPlans { get; set; } = new Dictionary<DateTime, List<MealPlanViewModel>>();
-        public List<Recipe> Recipes { get; set; } = new List<Recipe>();
-        public List<Ingredient> Ingredients { get; set; } = new List<Ingredient>();
+        // Właściwości widoku
         public User CurrentUser { get; set; }
-
-        // Parametr dla nawigacji tygodniowej
-        [BindProperty(SupportsGet = true)]
-        public int WeekOffset { get; set; } = 0;
-
-        public class DayInfo
-        {
-            public string Name { get; set; }
-            public DateTime Date { get; set; }
-            public bool IsToday { get; set; }
-        }
-
-        public class DailyTotals
-        {
-            public int Calories { get; set; } = 0;
-            public float Protein { get; set; } = 0;
-            public float Fat { get; set; } = 0;
-            public float Carbs { get; set; } = 0;
-        }
 
         public async Task<IActionResult> OnGetAsync()
         {
-            try
-            {
-                // Pobierz ID zalogowanego użytkownika
-                if (!User.Identity.IsAuthenticated)
-                {
-                    return RedirectToPage("/Account/Login");
-                }
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
 
-                var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
-                {
-                    return RedirectToPage("/Account/Login");
-                }
+            // Pobierz dane użytkownika z bazy
+            CurrentUser = await _context.Users
+                .FirstOrDefaultAsync(u => u.Id == userId);
 
-                // Pobierz dane użytkownika
-                CurrentUser = await _context.Users
-                    .FirstOrDefaultAsync(u => u.Id == userId);
-
-                if (CurrentUser == null)
-                {
-                    return RedirectToPage("/Account/Login");
-                }
-
-                // Przygotuj informacje o dniach tygodnia z uwzględnieniem offsetu
-                WeekDays = GetWeekDays(WeekOffset);
-
-                // Pobierz przepisy użytkownika i publiczne
-                Recipes = await _context.Recipes
-                    .Where(r => r.UserId == userId || r.IsPublic)
-                    .Include(r => r.RecipeIngredients)
-                        .ThenInclude(ri => ri.Ingredient)
-                    .Include(r => r.Ratings) // Dodaj ładowanie ocen
-                    .ToListAsync();
-
-                // Pobierz składniki
-                Ingredients = await _context.Ingredients
-                    .OrderBy(i => i.Name)
-                    .ToListAsync();
-
-                // Przygotuj daty dla zapytań
-                var startDate = WeekDays.First().Date;
-                var endDate = WeekDays.Last().Date.AddDays(1).AddSeconds(-1); // Koniec ostatniego dnia
-
-                // Pobierz plany posiłków z relacją do przepisów przez tabelę łączącą
-                var mealPlans = await _context.MealPlans
-                   .Where(mp => mp.UserId == userId &&
-                          mp.Date >= startDate && mp.Date <= endDate)
-                   .Include(mp => mp.PlanPosilkowPrzepisy)
-                       .ThenInclude(ppp => ppp.Przepis)
-                           .ThenInclude(r => r.RecipeIngredients)
-                               .ThenInclude(ri => ri.Ingredient)
-                   .Include(mp => mp.PlanPosilkowPrzepisy)
-                       .ThenInclude(ppp => ppp.Przepis)
-                           .ThenInclude(r => r.Ratings) // Dodaj ładowanie ocen przepisów
-                   .OrderBy(mp => mp.Date)
-                   .ThenBy(mp => mp.MealType)
-                   .ToListAsync();
-
-                // Przekształć plany posiłków do modelu widoku, który zachowuje kompatybilność
-                // z poprzednią strukturą dla szablonu
-                foreach (var mealPlan in mealPlans)
-                {
-                    if (mealPlan.Date.HasValue)
-                    {
-                        var date = mealPlan.Date.Value.Date;
-                        if (!MealPlans.ContainsKey(date))
-                        {
-                            MealPlans[date] = new List<MealPlanViewModel>();
-                        }
-
-                        // Tworzenie modelu widoku
-                        var viewModel = new MealPlanViewModel
-                        {
-                            Id = mealPlan.Id,
-                            UserId = mealPlan.UserId,
-                            Date = mealPlan.Date,
-                            MealType = mealPlan.MealType,
-                            CustomEntry = mealPlan.CustomEntry,
-                            Eaten = mealPlan.Eaten
-                        };
-
-                        // Przypisanie przepisu z relacji, jeśli istnieje
-                        var planPosilkowPrzepis = mealPlan.PlanPosilkowPrzepisy?.FirstOrDefault();
-                        if (planPosilkowPrzepis != null)
-                        {
-                            viewModel.Recipe = planPosilkowPrzepis.Przepis;
-                            viewModel.RecipeId = planPosilkowPrzepis.PrzepisId;
-                        }
-
-                        MealPlans[date].Add(viewModel);
-                    }
-                }
-
-                return Page();
-            }
-            catch (Exception ex)
-            {
-                // Logowanie błędu
-                Console.WriteLine($"Błąd podczas ładowania strony diety: {ex.Message}");
-                return RedirectToPage("/Error", new { message = ex.Message });
-            }
-        }
-
-        // Metoda zwracająca informacje o dniach tygodnia (poniedziałek-niedziela) z uwzględnieniem offsetu
-        private List<DayInfo> GetWeekDays(int weekOffset = 0)
-        {
-            var days = new List<DayInfo>();
-            var today = DateTime.Today;
-
-            // Znajdź poniedziałek bieżącego tygodnia
-            var monday = today.AddDays(-(int)today.DayOfWeek + (int)DayOfWeek.Monday);
-            if (today.DayOfWeek == DayOfWeek.Sunday)
-                monday = monday.AddDays(-7); // Jeśli dziś niedziela, cofnij do poprzedniego poniedziałku
-
-            // Zastosuj offset tygodniowy
-            monday = monday.AddDays(weekOffset * 7);
-
-            // Dodaj 7 dni od poniedziałku
-            for (int i = 0; i < 7; i++)
-            {
-                var date = monday.AddDays(i);
-                days.Add(new DayInfo
-                {
-                    Name = GetPolishDayName(date.DayOfWeek),
-                    Date = date,
-                    IsToday = date.Date == today
-                });
-            }
-
-            return days;
-        }
-
-        // Metoda zwracająca polskie nazwy dni tygodnia
-        private string GetPolishDayName(DayOfWeek dayOfWeek)
-        {
-            switch (dayOfWeek)
-            {
-                case DayOfWeek.Monday: return "Poniedziałek";
-                case DayOfWeek.Tuesday: return "Wtorek";
-                case DayOfWeek.Wednesday: return "Środa";
-                case DayOfWeek.Thursday: return "Czwartek";
-                case DayOfWeek.Friday: return "Piątek";
-                case DayOfWeek.Saturday: return "Sobota";
-                case DayOfWeek.Sunday: return "Niedziela";
-                default: return string.Empty;
-            }
-        }
-
-        // Metoda obliczająca całkowitą wartość odżywczą posiłków dla danego dnia
-        public DailyTotals GetDailyTotals(DateTime date)
-        {
-            var totals = new DailyTotals();
-
-            if (MealPlans.ContainsKey(date))
-            {
-                foreach (var meal in MealPlans[date])
-                {
-                    if (meal.Recipe != null)
-                    {
-                        totals.Calories += meal.Recipe.Calories;
-                        totals.Protein += meal.Recipe.Protein;
-                        totals.Fat += meal.Recipe.Fat;
-                        totals.Carbs += meal.Recipe.Carbs;
-                    }
-                    else
-                    {
-                        // Próba analizy zawartości CustomEntry, jeśli istnieje
-                        // Np. jeśli zawiera informacje o makroskładnikach
-                        // To logika, którą możesz zaimplementować w przyszłości
-                    }
-                }
-            }
-
-            // Zaokrąglanie wartości dla lepszej czytelności
-            totals.Protein = (float)Math.Round(totals.Protein, 1);
-            totals.Fat = (float)Math.Round(totals.Fat, 1);
-            totals.Carbs = (float)Math.Round(totals.Carbs, 1);
-
-            return totals;
-        }
-
-        // Metoda pomocnicza do debugowania - zwraca dostępne składniki dla przepisu
-        public List<RecipeIngredient> GetIngredients(int recipeId)
-        {
-            var recipe = Recipes.FirstOrDefault(r => r.Id == recipeId);
-            return recipe?.RecipeIngredients?.ToList() ?? new List<RecipeIngredient>();
-        }
-
-        // Pomocnicza metoda do pobierania zjedzone/niezjedzone posiłki na dany dzień
-        public List<MealPlanViewModel> GetMealsByStatus(DateTime date, bool eaten)
-        {
-            if (MealPlans.ContainsKey(date))
-            {
-                return MealPlans[date].Where(m => m.Eaten == eaten).ToList();
-            }
-            return new List<MealPlanViewModel>();
-        }
-
-        // Metoda zwracająca kalorie dla aktualnego użytkownika (można dodać kalkulacje na podstawie wagi, wzrostu, aktywności)
-        public int GetRecommendedCalories()
-        {
             if (CurrentUser == null)
-                return 2000; // Domyślna wartość
-
-            // Tutaj możesz dodać bardziej zaawansowaną logikę na podstawie profilu użytkownika
-            // Np. wykorzystując Harris-Benedict lub inne równania dla BMR i TDEE
-
-            if (CurrentUser.Plec == Gender.Mezczyzna)
             {
-                return 2500; // Przykładowa wartość dla mężczyzny
-            }
-            else if (CurrentUser.Plec == Gender.Kobieta)
-            {
-                return 2000; // Przykładowa wartość dla kobiety
+                return RedirectToPage("/Account/Login");
             }
 
-            return 2200; // Domyślna wartość, jeśli płeć nie jest określona
+            // Jeśli użytkownik nie ma wypełnionych danych żywieniowych, oblicz je
+            if (!CurrentUser.CustomCaloriesDeficit.HasValue ||
+                !CurrentUser.CustomProteinGrams.HasValue ||
+                !CurrentUser.CustomCarbsGrams.HasValue ||
+                !CurrentUser.CustomFatGrams.HasValue)
+            {
+                // Jeśli brak podstawowych danych, przekieruj do setup
+                if (!CurrentUser.Waga.HasValue || !CurrentUser.Wzrost.HasValue || !CurrentUser.Wiek.HasValue)
+                {
+                    return RedirectToPage("/Profile/Setup");
+                }
+
+                // Oblicz brakujące dane żywieniowe używając tej samej logiki co w Edit.cshtml.cs
+                CalculateNutritionData(CurrentUser);
+                await _context.SaveChangesAsync();
+            }
+
+            return Page();
         }
 
-        // Metoda do sprawdzania czy użytkownik ukończył swoje cele żywieniowe na dany dzień
-        public bool IsNutritionGoalCompleted(DateTime date)
+        private void CalculateNutritionData(User user)
         {
-            var totals = GetDailyTotals(date);
-            var recommendedCalories = GetRecommendedCalories();
-
-            // Przykładowa logika - uznajemy cel za ukończony, jeśli spożycie kalorii 
-            // mieści się w zakresie 90-110% zalecanego poziomu
-            var minCalories = recommendedCalories * 0.9;
-            var maxCalories = recommendedCalories * 1.1;
-
-            return totals.Calories >= minCalories && totals.Calories <= maxCalories;
-        }
-
-        // Funkcja generująca HTML z gwiazdkami dla ocen
-        public string GetStarsHtml(double rating)
-        {
-            int fullStars = (int)Math.Floor(rating);
-            bool hasHalfStar = rating % 1 >= 0.5;
-            string starsHtml = "";
-
-            for (int i = 1; i <= 5; i++)
+            // BMI
+            if (user.Wzrost.HasValue && user.Waga.HasValue)
             {
-                if (i <= fullStars)
-                {
-                    starsHtml += "★";  // Pełna gwiazdka
-                }
-                else if (i == fullStars + 1 && hasHalfStar)
-                {
-                    starsHtml += "☆";  // Pół gwiazdki (można użyć ½ lub specjalnego znaku)
-                }
-                else
-                {
-                    starsHtml += "☆";  // Pusta gwiazdka
-                }
+                double heightInMeters = user.Wzrost.Value / 100.0;
+                double bmi = user.Waga.Value / (heightInMeters * heightInMeters);
+                user.CustomBmi = bmi;
             }
 
-            return starsHtml;
-        }
-    }
+            // Kalorie
+            int caloriesDeficit = CalculateCaloriesDeficit(user);
+            user.CustomCaloriesDeficit = caloriesDeficit;
 
-    // Model widoku dla kompatybilności z widokiem
-    public class MealPlanViewModel
-    {
-        public int Id { get; set; }
-        public int UserId { get; set; }
-        public DateTime? Date { get; set; }
-        public MealType MealType { get; set; }
-        public string CustomEntry { get; set; }
-        public bool Eaten { get; set; }
-        public Recipe Recipe { get; set; }
-        public int? RecipeId { get; set; }
+            // Makroskładniki
+            CalculateMacronutrients(user);
+        }
+
+        private int CalculateCaloriesDeficit(User user)
+        {
+            if (!user.Waga.HasValue || !user.Wzrost.HasValue || !user.Wiek.HasValue)
+            {
+                return 2000;
+            }
+
+            double bmr;
+            if (user.Plec == Gender.Mezczyzna)
+            {
+                bmr = 10 * user.Waga.Value + 6.25 * user.Wzrost.Value - 5 * user.Wiek.Value + 5;
+            }
+            else
+            {
+                bmr = 10 * user.Waga.Value + 6.25 * user.Wzrost.Value - 5 * user.Wiek.Value - 161;
+            }
+
+            double pal = 1.2;
+            if (user.AktywnoscFizyczna != null)
+            {
+                if (user.AktywnoscFizyczna.Contains("0 treningów"))
+                    pal = 1.2;
+                else if (user.AktywnoscFizyczna.Contains("1-3"))
+                    pal = 1.375;
+                else if (user.AktywnoscFizyczna.Contains("4-5"))
+                    pal = 1.55;
+            }
+
+            if (user.RodzajPracy != null)
+            {
+                if (user.RodzajPracy == "Fizyczna")
+                    pal += 0.1;
+                else if (user.RodzajPracy == "Pół na pół")
+                    pal += 0.05;
+            }
+
+            double tdee = bmr * pal;
+
+            if (user.Wiek > 40)
+                tdee *= 0.98;
+            if (user.Wiek > 60)
+                tdee *= 0.97;
+
+            int deficit = 0;
+            if (user.Cel == UserGoal.Schudniecie)
+            {
+                deficit = (int)(tdee * 0.8);
+            }
+            else if (user.Cel == UserGoal.PrzybranieMasy)
+            {
+                deficit = (int)(tdee * 1.1);
+            }
+            else
+            {
+                deficit = (int)tdee;
+            }
+
+            int minCalories = user.Plec == Gender.Mezczyzna ? 1500 : 1200;
+            if (deficit < minCalories)
+                deficit = minCalories;
+
+            return deficit;
+        }
+
+        private void CalculateMacronutrients(User user)
+        {
+            if (user.CustomCaloriesDeficit <= 0 || !user.Waga.HasValue)
+            {
+                user.CustomProteinGrams = 100;
+                user.CustomCarbsGrams = 200;
+                user.CustomFatGrams = 80;
+                return;
+            }
+
+            if (user.Cel == UserGoal.Schudniecie)
+            {
+                double proteinMultiplier = user.Plec == Gender.Mezczyzna ? 2.0 : 1.8;
+                user.CustomProteinGrams = (int)(user.Waga.Value * proteinMultiplier);
+                user.CustomFatGrams = (int)(user.CustomCaloriesDeficit * 0.25 / 9);
+                user.CustomCarbsGrams = (int)((user.CustomCaloriesDeficit - (user.CustomProteinGrams.Value * 4) - (user.CustomFatGrams.Value * 9)) / 4);
+            }
+            else if (user.Cel == UserGoal.PrzybranieMasy)
+            {
+                double proteinMultiplier = user.Plec == Gender.Mezczyzna ? 1.8 : 1.6;
+                user.CustomProteinGrams = (int)(user.Waga.Value * proteinMultiplier);
+                user.CustomFatGrams = (int)(user.CustomCaloriesDeficit * 0.25 / 9);
+                user.CustomCarbsGrams = (int)((user.CustomCaloriesDeficit - (user.CustomProteinGrams.Value * 4) - (user.CustomFatGrams.Value * 9)) / 4);
+            }
+            else
+            {
+                double proteinMultiplier = user.Plec == Gender.Mezczyzna ? 1.6 : 1.4;
+                user.CustomProteinGrams = (int)(user.Waga.Value * proteinMultiplier);
+                user.CustomFatGrams = (int)(user.CustomCaloriesDeficit * 0.3 / 9);
+                user.CustomCarbsGrams = (int)((user.CustomCaloriesDeficit - (user.CustomProteinGrams.Value * 4) - (user.CustomFatGrams.Value * 9)) / 4);
+            }
+
+            if (user.AktywnoscFizyczna != null && user.AktywnoscFizyczna.Contains("4-5"))
+            {
+                int extraCarbs = (int)(user.Waga.Value * 0.5);
+                user.CustomCarbsGrams += extraCarbs;
+            }
+
+            if (user.CustomCarbsGrams < 50) user.CustomCarbsGrams = 50;
+            if (user.CustomProteinGrams < 40) user.CustomProteinGrams = 40;
+            if (user.CustomFatGrams < 20) user.CustomFatGrams = 20;
+        }
     }
 }

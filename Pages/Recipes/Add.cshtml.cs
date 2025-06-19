@@ -1,0 +1,259 @@
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
+using KontrolaNawykow.Models;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
+using System.ComponentModel.DataAnnotations;
+using System.Text.Json;
+
+namespace KontrolaNawykow.Pages.Recipes
+{
+    [Authorize]
+    public class AddModel : PageModel
+    {
+        private readonly ApplicationDbContext _context;
+
+        public AddModel(ApplicationDbContext context)
+        {
+            _context = context;
+        }
+
+        [BindProperty]
+        [Required(ErrorMessage = "Nazwa przepisu jest wymagana")]
+        [StringLength(200, ErrorMessage = "Nazwa przepisu nie mo¿e byæ d³u¿sza ni¿ 200 znaków")]
+        public string Name { get; set; }
+
+        [BindProperty]
+        [Required(ErrorMessage = "Kalorie s¹ wymagane")]
+        [Range(0, 9999, ErrorMessage = "Kalorie musz¹ byæ miêdzy 0 a 9999")]
+        public int Calories { get; set; }
+
+        [BindProperty]
+        [Required(ErrorMessage = "Bia³ko jest wymagane")]
+        [Range(0, 100, ErrorMessage = "Bia³ko musi byæ miêdzy 0 a 100g")]
+        public float Protein { get; set; }
+
+        [BindProperty]
+        [Required(ErrorMessage = "Wêglowodany s¹ wymagane")]
+        [Range(0, 100, ErrorMessage = "Wêglowodany musz¹ byæ miêdzy 0 a 100g")]
+        public float Carbs { get; set; }
+
+        [BindProperty]
+        [Required(ErrorMessage = "T³uszcze s¹ wymagane")]
+        [Range(0, 100, ErrorMessage = "T³uszcze musz¹ byæ miêdzy 0 a 100g")]
+        public float Fat { get; set; }
+
+        [BindProperty]
+        [StringLength(5000, ErrorMessage = "Instrukcje nie mog¹ byæ d³u¿sze ni¿ 5000 znaków")]
+        public string Instructions { get; set; }
+
+        [BindProperty]
+        public bool IsPublic { get; set; }
+
+        [BindProperty]
+        public IFormFile Image { get; set; }
+
+        [BindProperty]
+        public string RecipeIngredients { get; set; }
+
+        public string SuccessMessage { get; set; }
+        public string ErrorMessage { get; set; }
+
+        public async Task<IActionResult> OnGetAsync()
+        {
+            // SprawdŸ czy u¿ytkownik jest zalogowany
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return RedirectToPage("/Account/Login");
+            }
+
+            return Page();
+        }
+
+        public async Task<IActionResult> OnPostAsync()
+        {
+            try
+            {
+                Console.WriteLine("=== POST Recipe Add started ===");
+
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return RedirectToPage("/Account/Login");
+                }
+
+                // Debugowanie danych formularza
+                Console.WriteLine($"Name: {Name}");
+                Console.WriteLine($"Calories: {Calories}");
+                Console.WriteLine($"Protein: {Protein}");
+                Console.WriteLine($"Carbs: {Carbs}");
+                Console.WriteLine($"Fat: {Fat}");
+                Console.WriteLine($"IsPublic: {IsPublic}");
+                Console.WriteLine($"RecipeIngredients: {RecipeIngredients}");
+
+                if (!ModelState.IsValid)
+                {
+                    Console.WriteLine("ModelState is invalid:");
+                    foreach (var error in ModelState.Values.SelectMany(v => v.Errors))
+                    {
+                        Console.WriteLine($"- {error.ErrorMessage}");
+                    }
+                    ErrorMessage = "Proszê poprawiæ b³êdy w formularzu.";
+                    return Page();
+                }
+
+                // Rozpocznij transakcjê
+                using var transaction = await _context.Database.BeginTransactionAsync();
+
+                try
+                {
+                    // Utwórz nowy przepis
+                    var recipe = new Recipe
+                    {
+                        Name = Name,
+                        Calories = Calories,
+                        Protein = Protein,
+                        Carbs = Carbs,
+                        Fat = Fat,
+                        Instructions = Instructions ?? string.Empty,
+                        IsPublic = IsPublic,
+                        UserId = int.Parse(userId)
+                    };
+
+                    // Obs³uga obrazu
+                    if (Image != null && Image.Length > 0)
+                    {
+                        Console.WriteLine($"Processing image: {Image.FileName}, Size: {Image.Length}");
+
+                        // SprawdŸ typ pliku
+                        var allowedTypes = new[] { "image/jpeg", "image/jpg", "image/png", "image/gif" };
+                        if (!allowedTypes.Contains(Image.ContentType.ToLower()))
+                        {
+                            ErrorMessage = "Dozwolone s¹ tylko pliki obrazów (JPG, PNG, GIF).";
+                            return Page();
+                        }
+
+                        // SprawdŸ rozmiar pliku (max 5MB)
+                        if (Image.Length > 5 * 1024 * 1024)
+                        {
+                            ErrorMessage = "Plik nie mo¿e byæ wiêkszy ni¿ 5MB.";
+                            return Page();
+                        }
+
+                        using (var memoryStream = new MemoryStream())
+                        {
+                            await Image.CopyToAsync(memoryStream);
+                            recipe.ImageData = memoryStream.ToArray();
+                        }
+
+                        Console.WriteLine("Image processed successfully");
+                    }
+
+                    // Dodaj przepis do bazy
+                    _context.Recipes.Add(recipe);
+                    await _context.SaveChangesAsync();
+
+                    Console.WriteLine($"Recipe saved with ID: {recipe.Id}");
+
+                    // Przetwórz sk³adniki
+                    if (!string.IsNullOrEmpty(RecipeIngredients))
+                    {
+                        Console.WriteLine("Processing ingredients...");
+
+                        try
+                        {
+                            var ingredientsData = JsonSerializer.Deserialize<List<RecipeIngredientDto>>(RecipeIngredients);
+                            Console.WriteLine($"Parsed {ingredientsData?.Count ?? 0} ingredients");
+
+                            if (ingredientsData != null && ingredientsData.Count > 0)
+                            {
+                                // Filtruj nieprawid³owe sk³adniki
+                                var validIngredients = ingredientsData
+                                    .Where(ing => ing.IngredientId > 0 && ing.Amount > 0)
+                                    .ToList();
+
+                                Console.WriteLine($"Valid ingredients: {validIngredients.Count}");
+
+                                foreach (var ingredient in validIngredients)
+                                {
+                                    // SprawdŸ czy sk³adnik istnieje w bazie
+                                    var ingredientExists = await _context.Ingredients
+                                        .AnyAsync(i => i.Id == ingredient.IngredientId);
+
+                                    if (!ingredientExists)
+                                    {
+                                        Console.WriteLine($"Ingredient with ID {ingredient.IngredientId} does not exist");
+                                        await transaction.RollbackAsync();
+                                        ErrorMessage = $"Sk³adnik o ID {ingredient.IngredientId} nie istnieje w bazie danych.";
+                                        return Page();
+                                    }
+
+                                    var recipeIngredient = new RecipeIngredient
+                                    {
+                                        RecipeId = recipe.Id,
+                                        IngredientId = ingredient.IngredientId,
+                                        Amount = ingredient.Amount
+                                    };
+
+                                    _context.RecipeIngredients.Add(recipeIngredient);
+                                    Console.WriteLine($"Added ingredient: ID={ingredient.IngredientId}, Amount={ingredient.Amount}");
+                                }
+
+                                await _context.SaveChangesAsync();
+                                Console.WriteLine("All ingredients saved successfully");
+                            }
+                        }
+                        catch (JsonException ex)
+                        {
+                            Console.WriteLine($"JSON parsing error: {ex.Message}");
+                            await transaction.RollbackAsync();
+                            ErrorMessage = "B³¹d podczas przetwarzania sk³adników. Spróbuj ponownie.";
+                            return Page();
+                        }
+                    }
+
+                    // ZatwierdŸ transakcjê
+                    await transaction.CommitAsync();
+                    Console.WriteLine("Transaction committed successfully");
+
+                    SuccessMessage = $"Przepis '{Name}' zosta³ dodany pomyœlnie!";
+
+                    // Wyczyœæ formularz po pomyœlnym dodaniu
+                    Name = string.Empty;
+                    Calories = 0;
+                    Protein = 0;
+                    Carbs = 0;
+                    Fat = 0;
+                    Instructions = string.Empty;
+                    IsPublic = false;
+                    RecipeIngredients = string.Empty;
+
+                    return Page();
+                }
+                catch (Exception innerEx)
+                {
+                    Console.WriteLine($"Error in transaction: {innerEx.Message}");
+                    Console.WriteLine($"Stack trace: {innerEx.StackTrace}");
+                    await transaction.RollbackAsync();
+                    throw;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in OnPostAsync: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                ErrorMessage = $"Wyst¹pi³ b³¹d podczas dodawania przepisu: {ex.Message}";
+                return Page();
+            }
+        }
+
+        // DTO dla sk³adników przepisu
+        public class RecipeIngredientDto
+        {
+            public int IngredientId { get; set; }
+            public float Amount { get; set; }
+        }
+    }
+}

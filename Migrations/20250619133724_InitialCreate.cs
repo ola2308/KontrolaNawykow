@@ -84,7 +84,8 @@ namespace KontrolaNawykow.Migrations
                     CustomProteinGrams = table.Column<int>(type: "INTEGER", nullable: true),
                     CustomCarbsGrams = table.Column<int>(type: "INTEGER", nullable: true),
                     CustomFatGrams = table.Column<int>(type: "INTEGER", nullable: true),
-                    DietetykId = table.Column<int>(type: "INTEGER", nullable: true)
+                    DietetykId = table.Column<int>(type: "INTEGER", nullable: true),
+                    DieticianAccepted = table.Column<int>(type: "INTEGER", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -337,7 +338,8 @@ namespace KontrolaNawykow.Migrations
                     Date = table.Column<DateTime>(type: "TEXT", nullable: true),
                     RecipeId = table.Column<int>(type: "INTEGER", nullable: true),
                     CustomEntry = table.Column<string>(type: "TEXT", nullable: false),
-                    Eaten = table.Column<bool>(type: "INTEGER", nullable: false)
+                    Eaten = table.Column<bool>(type: "INTEGER", nullable: false),
+                    Gramature = table.Column<float>(type: "REAL", nullable: true)
                 },
                 constraints: table =>
                 {

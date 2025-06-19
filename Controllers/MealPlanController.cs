@@ -47,10 +47,20 @@ namespace KontrolaNawykow.Controllers
                     MealType = mp.MealType,
                     CustomEntry = mp.CustomEntry,
                     Eaten = mp.Eaten,
+                    Gramature = mp.Gramature,
+
+                    // Nutrition data - prefer custom values if available, otherwise use recipe
+                    Calories = mp.CustomCalories ?? (mp.Recipe?.Calories ?? mp.PlanPosilkowPrzepisy.FirstOrDefault()?.Przepis?.Calories ?? 0),
+                    Protein = mp.CustomProtein ?? (mp.Recipe?.Protein ?? mp.PlanPosilkowPrzepisy.FirstOrDefault()?.Przepis?.Protein ?? 0),
+                    Carbs = mp.CustomCarbs ?? (mp.Recipe?.Carbs ?? mp.PlanPosilkowPrzepisy.FirstOrDefault()?.Przepis?.Carbs ?? 0),
+                    Fat = mp.CustomFat ?? (mp.Recipe?.Fat ?? mp.PlanPosilkowPrzepisy.FirstOrDefault()?.Przepis?.Fat ?? 0),
 
                     // Preferuj przepis z bezpośredniej relacji, jeśli istnieje
                     Recipe = mp.Recipe ?? mp.PlanPosilkowPrzepisy.FirstOrDefault()?.Przepis,
-                    RecipeId = mp.RecipeId ?? mp.PlanPosilkowPrzepisy.FirstOrDefault()?.PrzepisId
+                    RecipeId = mp.RecipeId ?? mp.PlanPosilkowPrzepisy.FirstOrDefault()?.PrzepisId,
+
+                    // Custom nutrition flags
+                    HasCustomNutrition = mp.CustomCalories.HasValue || mp.CustomProtein.HasValue || mp.CustomCarbs.HasValue || mp.CustomFat.HasValue
                 }).ToList();
 
                 return mealPlanViewModels;
@@ -88,10 +98,19 @@ namespace KontrolaNawykow.Controllers
                     MealType = mealPlan.MealType,
                     CustomEntry = mealPlan.CustomEntry,
                     Eaten = mealPlan.Eaten,
+                    Gramature = mealPlan.Gramature,
+
+                    // Nutrition data - prefer custom values if available
+                    Calories = mealPlan.CustomCalories ?? (mealPlan.Recipe?.Calories ?? mealPlan.PlanPosilkowPrzepisy.FirstOrDefault()?.Przepis?.Calories ?? 0),
+                    Protein = mealPlan.CustomProtein ?? (mealPlan.Recipe?.Protein ?? mealPlan.PlanPosilkowPrzepisy.FirstOrDefault()?.Przepis?.Protein ?? 0),
+                    Carbs = mealPlan.CustomCarbs ?? (mealPlan.Recipe?.Carbs ?? mealPlan.PlanPosilkowPrzepisy.FirstOrDefault()?.Przepis?.Carbs ?? 0),
+                    Fat = mealPlan.CustomFat ?? (mealPlan.Recipe?.Fat ?? mealPlan.PlanPosilkowPrzepisy.FirstOrDefault()?.Przepis?.Fat ?? 0),
 
                     // Preferuj przepis z bezpośredniej relacji, jeśli istnieje
                     Recipe = mealPlan.Recipe ?? mealPlan.PlanPosilkowPrzepisy.FirstOrDefault()?.Przepis,
-                    RecipeId = mealPlan.RecipeId ?? mealPlan.PlanPosilkowPrzepisy.FirstOrDefault()?.PrzepisId
+                    RecipeId = mealPlan.RecipeId ?? mealPlan.PlanPosilkowPrzepisy.FirstOrDefault()?.PrzepisId,
+
+                    HasCustomNutrition = mealPlan.CustomCalories.HasValue || mealPlan.CustomProtein.HasValue || mealPlan.CustomCarbs.HasValue || mealPlan.CustomFat.HasValue
                 };
 
                 return mealPlanViewModel;
@@ -116,7 +135,7 @@ namespace KontrolaNawykow.Controllers
                     return BadRequest("Brak danych posiłku");
                 }
 
-                Console.WriteLine($"Otrzymane dane: Date={mealPlanDto.Date}, MealType={mealPlanDto.MealType}, RecipeId={mealPlanDto.RecipeId}");
+                Console.WriteLine($"Otrzymane dane: Date={mealPlanDto.Date}, MealType={mealPlanDto.MealType}, RecipeId={mealPlanDto.RecipeId}, Gramature={mealPlanDto.Gramature}");
 
                 var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
                 Console.WriteLine($"User ID: {userId}");
@@ -133,10 +152,17 @@ namespace KontrolaNawykow.Controllers
                         MealType = (MealType)Enum.Parse(typeof(MealType), mealPlanDto.MealType),
                         RecipeId = mealPlanDto.RecipeId, // Ustaw bezpośrednią relację (stary sposób)
                         Eaten = false,
-                        CustomEntry = mealPlanDto.CustomEntry ?? string.Empty
+                        CustomEntry = mealPlanDto.CustomEntry ?? string.Empty,
+                        Gramature = mealPlanDto.Gramature ?? 100,
+
+                        // Nowe pola dla własnych makroskładników
+                        CustomCalories = mealPlanDto.CustomCalories,
+                        CustomProtein = mealPlanDto.CustomProtein,
+                        CustomCarbs = mealPlanDto.CustomCarbs,
+                        CustomFat = mealPlanDto.CustomFat
                     };
 
-                    Console.WriteLine($"Utworzono obiekt MealPlan: ID={mealPlan.Id}");
+                    Console.WriteLine($"Utworzono obiekt MealPlan: ID={mealPlan.Id}, Gramature={mealPlan.Gramature}");
 
                     _context.MealPlans.Add(mealPlan);
                     await _context.SaveChangesAsync();
@@ -181,8 +207,18 @@ namespace KontrolaNawykow.Controllers
                         MealType = savedMealPlan.MealType,
                         CustomEntry = savedMealPlan.CustomEntry,
                         Eaten = savedMealPlan.Eaten,
+                        Gramature = savedMealPlan.Gramature,
+
+                        // Use custom nutrition if available, otherwise use recipe nutrition
+                        Calories = savedMealPlan.CustomCalories ?? (savedMealPlan.Recipe?.Calories ?? savedMealPlan.PlanPosilkowPrzepisy.FirstOrDefault()?.Przepis?.Calories ?? 0),
+                        Protein = savedMealPlan.CustomProtein ?? (savedMealPlan.Recipe?.Protein ?? savedMealPlan.PlanPosilkowPrzepisy.FirstOrDefault()?.Przepis?.Protein ?? 0),
+                        Carbs = savedMealPlan.CustomCarbs ?? (savedMealPlan.Recipe?.Carbs ?? savedMealPlan.PlanPosilkowPrzepisy.FirstOrDefault()?.Przepis?.Carbs ?? 0),
+                        Fat = savedMealPlan.CustomFat ?? (savedMealPlan.Recipe?.Fat ?? savedMealPlan.PlanPosilkowPrzepisy.FirstOrDefault()?.Przepis?.Fat ?? 0),
+
                         Recipe = savedMealPlan.Recipe ?? savedMealPlan.PlanPosilkowPrzepisy.FirstOrDefault()?.Przepis,
-                        RecipeId = savedMealPlan.RecipeId ?? savedMealPlan.PlanPosilkowPrzepisy.FirstOrDefault()?.PrzepisId
+                        RecipeId = savedMealPlan.RecipeId ?? savedMealPlan.PlanPosilkowPrzepisy.FirstOrDefault()?.PrzepisId,
+
+                        HasCustomNutrition = savedMealPlan.CustomCalories.HasValue || savedMealPlan.CustomProtein.HasValue || savedMealPlan.CustomCarbs.HasValue || savedMealPlan.CustomFat.HasValue
                     };
 
                     Console.WriteLine($"PostMealPlan zakończony sukcesem, zwracam MealPlan ID: {mealPlanViewModel.Id}");
@@ -234,6 +270,13 @@ namespace KontrolaNawykow.Controllers
                     mealPlan.Date = DateTime.Parse(mealPlanDto.Date);
                     mealPlan.MealType = (MealType)Enum.Parse(typeof(MealType), mealPlanDto.MealType);
                     mealPlan.CustomEntry = mealPlanDto.CustomEntry ?? mealPlan.CustomEntry;
+                    mealPlan.Gramature = mealPlanDto.Gramature ?? mealPlan.Gramature;
+
+                    // Update custom nutrition
+                    mealPlan.CustomCalories = mealPlanDto.CustomCalories;
+                    mealPlan.CustomProtein = mealPlanDto.CustomProtein;
+                    mealPlan.CustomCarbs = mealPlanDto.CustomCarbs;
+                    mealPlan.CustomFat = mealPlanDto.CustomFat;
 
                     // Aktualizuj starą relację
                     mealPlan.RecipeId = mealPlanDto.RecipeId;
@@ -416,6 +459,13 @@ namespace KontrolaNawykow.Controllers
         public string MealType { get; set; }
         public int? RecipeId { get; set; }
         public string CustomEntry { get; set; }
+        public float? Gramature { get; set; }
+
+        // Nowe pola dla własnych makroskładników
+        public int? CustomCalories { get; set; }
+        public float? CustomProtein { get; set; }
+        public float? CustomCarbs { get; set; }
+        public float? CustomFat { get; set; }
     }
 
     // View model to maintain compatibility with frontend
@@ -429,5 +479,12 @@ namespace KontrolaNawykow.Controllers
         public bool Eaten { get; set; }
         public Recipe Recipe { get; set; }
         public int? RecipeId { get; set; }
+        public float? Gramature { get; set; }
+
+        public int Calories { get; set; }
+        public float Protein { get; set; }
+        public float Carbs { get; set; }
+        public float Fat { get; set; }
+        public bool HasCustomNutrition { get; set; }
     }
 }

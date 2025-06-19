@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace KontrolaNawykow.Pages.Account
 {
-    [AllowAnonymous] // Upewniamy siê, ¿e dostêp nie jest blokowany przez autoryzacjê
+    [AllowAnonymous]
     public class RegisterModel : PageModel
     {
         private readonly ApplicationDbContext _context;
@@ -129,8 +129,8 @@ namespace KontrolaNawykow.Pages.Account
                 // Upewnienie siê, ¿e TempData zostaje zachowane
                 TempData.Keep("UserId");
 
-                Console.WriteLine("? Przekierowanie do RegisterProfile...");
-                return RedirectToPage("/Account/RegisterProfile");
+                Console.WriteLine("? Przekierowanie do Setup...");
+                return RedirectToPage("/Profile/Setup");
             }
             catch (Exception ex)
             {

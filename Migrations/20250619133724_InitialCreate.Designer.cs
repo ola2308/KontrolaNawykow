@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace KontrolaNawykow.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250523172141_InitialCreate")]
+    [Migration("20250619133724_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -231,6 +231,9 @@ namespace KontrolaNawykow.Migrations
 
                     b.Property<bool>("Eaten")
                         .HasColumnType("INTEGER");
+
+                    b.Property<float?>("Gramature")
+                        .HasColumnType("REAL");
 
                     b.Property<int>("MealType")
                         .HasColumnType("INTEGER");
@@ -543,6 +546,9 @@ namespace KontrolaNawykow.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<int?>("DietetykId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("DieticianAccepted")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Email")

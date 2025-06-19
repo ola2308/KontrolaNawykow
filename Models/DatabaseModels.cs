@@ -157,9 +157,14 @@ namespace KontrolaNawykow.Models
 
         public string CustomEntry { get; set; }
         public bool Eaten { get; set; }
+        public float? Gramature { get; set; } = 100;
 
         public List<PlanPosilkowPrzepis> PlanPosilkowPrzepisy { get; set; }
         public List<ListaZakupow> ListaZakupow { get; set; }
+        public int? CustomCalories { get; set; }
+        public float? CustomProtein { get; set; }
+        public float? CustomCarbs { get; set; }
+        public float? CustomFat { get; set; }
     }
 
     public class PlanPosilkowPrzepis

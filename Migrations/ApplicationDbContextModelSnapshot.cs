@@ -229,6 +229,9 @@ namespace KontrolaNawykow.Migrations
                     b.Property<bool>("Eaten")
                         .HasColumnType("INTEGER");
 
+                    b.Property<float?>("Gramature")
+                        .HasColumnType("REAL");
+
                     b.Property<int>("MealType")
                         .HasColumnType("INTEGER");
 
@@ -540,6 +543,9 @@ namespace KontrolaNawykow.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<int?>("DietetykId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("DieticianAccepted")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Email")
