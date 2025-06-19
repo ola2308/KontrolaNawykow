@@ -247,7 +247,6 @@ namespace KontrolaNawykow.Models
     {
         [Key]
         public int Id { get; set; }
-
         public string Imie { get; set; }
         public string Nazwisko { get; set; }
         public string Email { get; set; }
@@ -260,7 +259,6 @@ namespace KontrolaNawykow.Models
         // NOWE: Relacja do ocen
         public List<DietetykRating> Ratings { get; set; }
 
-        // NOWE: Właściwości obliczeniowe dla ocen
         [NotMapped]
         public double AverageRating => Ratings?.Any() == true ? Ratings.Average(r => r.Rating) : 0;
 

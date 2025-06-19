@@ -5,404 +5,747 @@
 }
 
 <div class="profile-container">
+    <!-- Header Navigation -->
+    <div class="navigation-header">
+        <div class="nav-tabs">
+            <a href="/Diet" class="nav-tab">Dieta</a>
+            <a href="/ToDo" class="nav-tab">ToDo</a>
+            <a href="/Admin" class="nav-tab">Admin</a>
+            <a href="/Dietitian" class="nav-tab">Twój dietetyk</a>
+        </div>
+        <div class="nav-actions">
+            <form method="post" action="/Account/Logout" style="display: inline;">
+                <button type="submit" class="logout-btn">🚪 Wyloguj</button>
+            </form>
+        </div>
+    </div>
+
     <div class="profile-header">
         <h1 class="profile-title">Mój profil</h1>
-        <a href="/Index" class="back-button">Powrót do strony głównej</a>
+        <a href="/Diet" class="back-button">Powrót do diety</a>
     </div>
     
     <div class="profile-content">
-        <div class="profile-column profile-data-column">
-            <div class="profile-section">
+        <!-- Dane podstawowe card -->
+        <div class="profile-card">
+            <div class="card-header">
                 <h2>Dane podstawowe</h2>
-                <div class="profile-data">
-                    <div class="profile-item">
-                        <span class="profile-label">Nazwa użytkownika:</span>
-                        <span class="profile-value">@Model.CurrentUser.Username</span>
-                    </div>
-                    <div class="profile-item">
-                        <span class="profile-label">Email:</span>
-                        <span class="profile-value">@Model.CurrentUser.Email</span>
-                    </div>
-                    <div class="profile-item">
-                        <span class="profile-label">Wiek:</span>
-                        <span class="profile-value">@(Model.CurrentUser.Wiek?.ToString() ?? "Nie podano")</span>
-                    </div>
-                    <div class="profile-item">
-                        <span class="profile-label">Płeć:</span>
-                        <span class="profile-value">@(Model.CurrentUser.Plec?.ToString() ?? "Nie podano")</span>
-                    </div>
-                </div>
+                <a href="/Profile/Edit" class="edit-icon">✏️</a>
             </div>
-            
-            <div class="profile-section">
-                <h2>Dane fizyczne</h2>
-                <div class="profile-data">
-                    <div class="profile-item">
-                        <span class="profile-label">Waga:</span>
-                        <span class="profile-value">@(Model.CurrentUser.Waga?.ToString("F1") ?? "Nie podano") kg</span>
-                    </div>
-                    <div class="profile-item">
-                        <span class="profile-label">Wzrost:</span>
-                        <span class="profile-value">@(Model.CurrentUser.Wzrost?.ToString("F1") ?? "Nie podano") cm</span>
-                    </div>
-                    <div class="profile-item">
-                        <span class="profile-label">BMI:</span>
-                        <span class="profile-value @GetBmiClass(Model.BMI)">@Model.BMI.ToString("F1") (@Model.BMICategory)</span>
-                    </div>
+            <div class="profile-data">
+                <div class="profile-item">
+                    <span class="profile-label">👤 Nazwa użytkownika:</span>
+                    <span class="profile-value">@Model.CurrentUser.Username</span>
                 </div>
-            </div>
-            
-            <div class="profile-section">
-                <h2>Cele i aktywność</h2>
-                <div class="profile-data">
-                    <div class="profile-item">
-                        <span class="profile-label">Cel:</span>
-                        <span class="profile-value">@Model.CurrentUser.Cel?.ToString()</span>
-                    </div>
-                    <div class="profile-item">
-                        <span class="profile-label">Aktywność fizyczna:</span>
-                        <span class="profile-value">@Model.CurrentUser.AktywnoscFizyczna</span>
-                    </div>
-                    <div class="profile-item">
-                        <span class="profile-label">Rodzaj pracy:</span>
-                        <span class="profile-value">@Model.CurrentUser.RodzajPracy</span>
-                    </div>
+                <div class="profile-item">
+                    <span class="profile-label">📧 Email:</span>
+                    <span class="profile-value">@Model.CurrentUser.Email</span>
                 </div>
-            </div>
-            
-            <div class="profile-section">
-                <h2>Zalecenia żywieniowe</h2>
-                <div class="profile-data">
-                    <div class="profile-item">
-                        <span class="profile-label">Dzienne zapotrzebowanie kaloryczne:</span>
-                        <span class="profile-value">@(Model.CurrentUser.CustomCaloriesDeficit?.ToString() ?? "Nie obliczono") kcal</span>
-                    </div>
-                    @if (Model.CurrentUser.CustomProteinGrams.HasValue)
-                    {
-                        <div class="profile-item">
-                            <span class="profile-label">Zalecane białko:</span>
-                            <span class="profile-value">@Model.CurrentUser.CustomProteinGrams g</span>
-                        </div>
-                    }
-                    @if (Model.CurrentUser.CustomCarbsGrams.HasValue)
-                    {
-                        <div class="profile-item">
-                            <span class="profile-label">Zalecane węglowodany:</span>
-                            <span class="profile-value">@Model.CurrentUser.CustomCarbsGrams g</span>
-                        </div>
-                    }
-                    @if (Model.CurrentUser.CustomFatGrams.HasValue)
-                    {
-                        <div class="profile-item">
-                            <span class="profile-label">Zalecane tłuszcze:</span>
-                            <span class="profile-value">@Model.CurrentUser.CustomFatGrams g</span>
-                        </div>
-                    }
+                <div class="profile-item">
+                    <span class="profile-label">🎂 Wiek:</span>
+                    <span class="profile-value">@(Model.CurrentUser.Wiek?.ToString() ?? "Nie podano")</span>
                 </div>
-            </div>
-            
-            <div class="profile-actions">
-                <a href="/Profile/Edit" class="profile-button">Edytuj profil</a>
-                <form method="post" asp-page-handler="GenerateShoppingList">
-                    <button type="submit" class="profile-button">Pobierz listę zakupów</button>
-                </form>
+                <div class="profile-item">
+                    <span class="profile-label">⚧ Płeć:</span>
+                    <span class="profile-value">@(Model.CurrentUser.Plec?.ToString() ?? "Nie podano")</span>
+                </div>
             </div>
         </div>
-        
-        <div class="profile-column profile-stats-column">
-            <div class="profile-section">
-                <h2>Statystyki</h2>
-                <div class="stats-container">
-                    <div class="stat-card">
-                        <div class="stat-value">@Model.TotalRecipes</div>
-                        <div class="stat-label">Przepisy</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">@Model.TotalMealPlans</div>
-                        <div class="stat-label">Zaplanowane posiłki</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">@Model.CompletedTasks</div>
-                        <div class="stat-label">Wykonane zadania</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">@Model.PendingTasks</div>
-                        <div class="stat-label">Oczekujące zadania</div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="profile-section">
-                <h2>Dzisiejsze podsumowanie</h2>
-                <div class="daily-summary">
-                    <div class="summary-item">
-                        <span class="summary-label">Łączna liczba kalorii:</span>
-                        <span class="summary-value">@Model.TotalCalories kcal</span>
-                    </div>
-                    <div class="summary-progress">
-                        @{
-                            var calPercentage = Model.CurrentUser.CustomCaloriesDeficit.HasValue ? 
-                                Math.Min(100, (int)(Model.TotalCalories * 100.0 / Model.CurrentUser.CustomCaloriesDeficit.Value)) : 0;
-                        }
-                        <div class="progress-bar">
-                            <div class="progress-fill" style="width: @calPercentage%"></div>
-                        </div>
-                        <div class="progress-text">@calPercentage% dziennego zapotrzebowania</div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="profile-section">
-                <h2>Lista zakupów</h2>
-                @if (Model.ShoppingList.Any())
-                {
-                    <div class="shopping-list">
-                        <ul class="ingredients-list">
-                            @foreach (var item in Model.ShoppingList)
-                            {
-                                <li class="ingredient-item">@item.IngredientName - @item.TotalAmount g</li>}
 
-                        </ul>
+        <!-- Dane fizyczne card -->
+        <div class="profile-card">
+            <div class="card-header">
+                <h2>Dane fizyczne</h2>
+            </div>
+            <div class="profile-data">
+                <div class="profile-item">
+                    <span class="profile-label">⚖️ Waga:</span>
+                    <span class="profile-value">@(Model.CurrentUser.Waga?.ToString("F1") ?? "Nie podano") kg</span>
+                </div>
+                <div class="profile-item">
+                    <span class="profile-label">📏 Wzrost:</span>
+                    <span class="profile-value">@(Model.CurrentUser.Wzrost?.ToString("F1") ?? "Nie podano") cm</span>
+                </div>
+                <div class="profile-item">
+                    <span class="profile-label">📊 BMI:</span>
+                    <span class="profile-value bmi-@GetBmiClass(Model.BMI)">@Model.BMI.ToString("F1") (@Model.BMICategory)</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cele i aktywność card -->
+        <div class="profile-card">
+            <div class="card-header">
+                <h2>Cele i aktywność</h2>
+            </div>
+            <div class="profile-data">
+                <div class="profile-item">
+                    <span class="profile-label">🎯 Cel:</span>
+                    <span class="profile-value">@Model.CurrentUser.Cel?.ToString()</span>
+                </div>
+                <div class="profile-item">
+                    <span class="profile-label">🏃 Aktywność fizyczna:</span>
+                    <span class="profile-value">@Model.CurrentUser.AktywnoscFizyczna</span>
+                </div>
+                <div class="profile-item">
+                    <span class="profile-label">💼 Rodzaj pracy:</span>
+                    <span class="profile-value">@Model.CurrentUser.RodzajPracy</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Zalecenia żywieniowe card -->
+        <div class="profile-card nutrition-card">
+            <div class="card-header">
+                <h2>Zalecenia żywieniowe</h2>
+            </div>
+            <div class="nutrition-grid">
+                <div class="nutrition-item calories">
+                    <div class="nutrition-icon">🔥</div>
+                    <div class="nutrition-info">
+                        <div class="nutrition-value">@(Model.CurrentUser.CustomCaloriesDeficit?.ToString() ?? "Nie obliczono")</div>
+                        <div class="nutrition-label">kcal dziennie</div>
+                    </div>
+                </div>
+                @if (Model.CurrentUser.CustomProteinGrams.HasValue)
+                {
+                    <div class="nutrition-item protein">
+                        <div class="nutrition-icon">🥩</div>
+                        <div class="nutrition-info">
+                            <div class="nutrition-value">@Model.CurrentUser.CustomProteinGrams g</div>
+                            <div class="nutrition-label">Białko</div>
+                        </div>
                     </div>
                 }
-                else
+                @if (Model.CurrentUser.CustomCarbsGrams.HasValue)
                 {
-                    <p class="empty-list-message">Brak składników do wyświetlenia. Dodaj posiłki na nadchodzący tydzień.</p>
+                    <div class="nutrition-item carbs">
+                        <div class="nutrition-icon">🍞</div>
+                        <div class="nutrition-info">
+                            <div class="nutrition-value">@Model.CurrentUser.CustomCarbsGrams g</div>
+                            <div class="nutrition-label">Węglowodany</div>
+                        </div>
+                    </div>
+                }
+                @if (Model.CurrentUser.CustomFatGrams.HasValue)
+                {
+                    <div class="nutrition-item fats">
+                        <div class="nutrition-icon">🥑</div>
+                        <div class="nutrition-info">
+                            <div class="nutrition-value">@Model.CurrentUser.CustomFatGrams g</div>
+                            <div class="nutrition-label">Tłuszcze</div>
+                        </div>
+                    </div>
                 }
             </div>
+        </div>
+
+        <!-- Statystyki card -->
+        <div class="profile-card stats-card">
+            <div class="card-header">
+                <h2>Statystyki</h2>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-icon">📝</div>
+                    <div class="stat-value">@Model.TotalRecipes</div>
+                    <div class="stat-label">Przepisy</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-icon">🍽️</div>
+                    <div class="stat-value">@Model.TotalMealPlans</div>
+                    <div class="stat-label">Zaplanowane posiłki</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-icon">✅</div>
+                    <div class="stat-value">@Model.CompletedTasks</div>
+                    <div class="stat-label">Wykonane zadania</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-icon">⏳</div>
+                    <div class="stat-value">@Model.PendingTasks</div>
+                    <div class="stat-label">Oczekujące zadania</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dzisiejsze podsumowanie card -->
+        <div class="profile-card summary-card">
+            <div class="card-header">
+                <h2>Dzisiejsze podsumowanie</h2>
+            </div>
+            <div class="daily-summary">
+                <div class="summary-item">
+                    <span class="summary-label">🔥 Łączna liczba kalorii:</span>
+                    <span class="summary-value">@Model.TotalCalories kcal</span>
+                </div>
+                <div class="summary-progress">
+                    @{
+                        var calPercentage = Model.CurrentUser.CustomCaloriesDeficit.HasValue ? 
+                            Math.Min(100, (int)(Model.TotalCalories * 100.0 / Model.CurrentUser.CustomCaloriesDeficit.Value)) : 0;
+                    }
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: @calPercentage%"></div>
+                    </div>
+                    <div class="progress-text">@calPercentage% dziennego zapotrzebowania</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lista zakupów card -->
+        <div class="profile-card shopping-card">
+            <div class="card-header">
+                <h2>Lista zakupów</h2>
+                <form method="post" asp-page-handler="GenerateShoppingList" style="display: inline;">
+                    <button type="submit" class="download-btn">📥 Pobierz</button>
+                </form>
+            </div>
+            @if (Model.ShoppingList.Any())
+            {
+                <div class="shopping-list">
+                    <ul class="ingredients-list">
+                        @foreach (var item in Model.ShoppingList)
+                        {
+                            <li class="ingredient-item">
+                                <span class="ingredient-name">@item.IngredientName</span>
+                                <span class="ingredient-amount">@item.TotalAmount g</span>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            }
+            else
+            {
+                <div class="empty-state">
+                    <div class="empty-icon">🛒</div>
+                    <p class="empty-message">Brak składników do wyświetlenia.<br>Dodaj posiłki na nadchodzący tydzień.</p>
+                </div>
+            }
         </div>
     </div>
 </div>
 
-@section Styles {
-    <style>
-        .profile-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        
-        .profile-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-        }
-        
-        .profile-title {
-            font-size: 2.2rem;
-            color: #333;
-            margin: 0;
-        }
-        
-        .back-button {
-            background-color: #e91e63;
-            color: white;
-            padding: 8px 16px;
-            border-radius: 5px;
-            text-decoration: none;
-            font-weight: bold;
-        }
-        
-        .back-button:hover {
-            background-color: #c2185b;
-        }
-        
-        .profile-content {
-            display: flex;
-            gap: 30px;
-        }
-        
-        .profile-column {
-            flex: 1;
-        }
-        
-        .profile-data-column {
-            flex: 1.3;
-        }
-        
-        .profile-stats-column {
-            flex: 0.7;
-        }
-        
-        .profile-section {
-            background-color: white;
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        }
-        
-        .profile-section h2 {
-            color: #333;
-            font-size: 1.4rem;
-            margin-top: 0;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #eee;
-        }
-        
-        .profile-data {
-            display: flex;
+<style>
+    /* Reset and base styles */
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        min-height: 100vh;
+    }
+
+    /* Navigation Header */
+    .navigation-header {
+        background: linear-gradient(135deg, #e91e63 0%, #ad1457 100%);
+        padding: 0;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .nav-tabs {
+        display: flex;
+        padding: 0 20px;
+    }
+
+    .nav-actions {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        padding: 0 20px;
+    }
+
+    .nav-tab {
+        color: rgba(255,255,255,0.8);
+        text-decoration: none;
+        padding: 15px 25px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        border-bottom: 3px solid transparent;
+        font-size: 16px;
+    }
+
+    .nav-tab:hover {
+        color: white;
+        background: rgba(255,255,255,0.1);
+    }
+
+    .nav-tab.active {
+        color: white;
+        border-bottom-color: #fff;
+        background: rgba(255,255,255,0.15);
+    }
+
+    .profile-link {
+        color: white;
+        text-decoration: none;
+        padding: 8px 16px;
+        border-radius: 20px;
+        background: rgba(255,255,255,0.15);
+        font-weight: 600;
+        font-size: 14px;
+        transition: all 0.3s ease;
+        border: 1px solid rgba(255,255,255,0.2);
+    }
+
+    .profile-link:hover {
+        background: rgba(255,255,255,0.25);
+        transform: translateY(-1px);
+        color: white;
+        text-decoration: none;
+    }
+
+    .logout-btn {
+        background: rgba(255,255,255,0.1);
+        color: white;
+        border: 1px solid rgba(255,255,255,0.3);
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .logout-btn:hover {
+        background: rgba(255,255,255,0.2);
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+
+    /* Profile Container */
+    .profile-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 30px 20px;
+    }
+
+    .profile-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+        background: white;
+        padding: 25px 30px;
+        border-radius: 15px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+
+    .profile-title {
+        font-size: 2.5rem;
+        color: #333;
+        margin: 0;
+        font-weight: 700;
+        background: linear-gradient(135deg, #e91e63, #ad1457);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .back-button {
+        background: linear-gradient(135deg, #e91e63, #ad1457);
+        color: white;
+        padding: 12px 24px;
+        border-radius: 25px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(233, 30, 99, 0.3);
+    }
+
+    .back-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(233, 30, 99, 0.4);
+        color: white;
+        text-decoration: none;
+    }
+
+    /* Profile Content Grid */
+    .profile-content {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 25px;
+    }
+
+    /* Profile Cards */
+    .profile-card {
+        background: white;
+        border-radius: 20px;
+        padding: 25px;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        border: 1px solid rgba(233, 30, 99, 0.1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .profile-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(135deg, #e91e63, #ad1457);
+    }
+
+    .profile-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 40px rgba(0,0,0,0.12);
+    }
+
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid #f0f0f0;
+    }
+
+    .card-header h2 {
+        color: #333;
+        font-size: 1.4rem;
+        font-weight: 600;
+        margin: 0;
+    }
+
+    .edit-icon {
+        font-size: 1.2rem;
+        text-decoration: none;
+        padding: 8px;
+        border-radius: 50%;
+        background: rgba(233, 30, 99, 0.1);
+        transition: all 0.3s ease;
+    }
+
+    .edit-icon:hover {
+        background: rgba(233, 30, 99, 0.2);
+        transform: scale(1.1);
+    }
+
+    /* Profile Data */
+    .profile-data {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .profile-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 1px solid #f5f5f5;
+    }
+
+    .profile-item:last-child {
+        border-bottom: none;
+    }
+
+    .profile-label {
+        font-weight: 600;
+        color: #555;
+        font-size: 0.95rem;
+    }
+
+    .profile-value {
+        color: #333;
+        font-weight: 500;
+    }
+
+    /* BMI Colors */
+    .profile-value.bmi-underweight { color: #ff9800; }
+    .profile-value.bmi-normal { color: #4caf50; }
+    .profile-value.bmi-overweight { color: #f44336; }
+
+    /* Nutrition Card */
+    .nutrition-card {
+        grid-column: span 2;
+    }
+
+    .nutrition-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+    }
+
+    .nutrition-item {
+        display: flex;
+        align-items: center;
+        padding: 20px;
+        border-radius: 15px;
+        transition: all 0.3s ease;
+    }
+
+    .nutrition-item.calories {
+        background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+        color: white;
+    }
+
+    .nutrition-item.protein {
+        background: linear-gradient(135deg, #74b9ff, #0984e3);
+        color: white;
+    }
+
+    .nutrition-item.carbs {
+        background: linear-gradient(135deg, #fdcb6e, #e17055);
+        color: white;
+    }
+
+    .nutrition-item.fats {
+        background: linear-gradient(135deg, #fd79a8, #e84393);
+        color: white;
+    }
+
+    .nutrition-icon {
+        font-size: 2rem;
+        margin-right: 15px;
+    }
+
+    .nutrition-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 2px;
+    }
+
+    .nutrition-label {
+        font-size: 0.9rem;
+        opacity: 0.9;
+    }
+
+    /* Stats Card */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+    }
+
+    .stat-item {
+        text-align: center;
+        padding: 20px;
+        background: rgba(233, 30, 99, 0.05);
+        border-radius: 15px;
+        transition: all 0.3s ease;
+    }
+
+    .stat-item:hover {
+        background: rgba(233, 30, 99, 0.1);
+        transform: scale(1.05);
+    }
+
+    .stat-icon {
+        font-size: 2rem;
+        margin-bottom: 10px;
+    }
+
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #e91e63;
+        margin-bottom: 5px;
+    }
+
+    .stat-label {
+        font-size: 0.9rem;
+        color: #666;
+        font-weight: 500;
+    }
+
+    /* Daily Summary */
+    .summary-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+
+    .summary-label {
+        font-weight: 600;
+        color: #555;
+    }
+
+    .summary-value {
+        color: #333;
+        font-weight: 600;
+    }
+
+    .progress-bar {
+        height: 15px;
+        background: #f0f0f0;
+        border-radius: 10px;
+        overflow: hidden;
+        margin-bottom: 8px;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(135deg, #e91e63, #ad1457);
+        border-radius: 10px;
+        transition: width 0.5s ease;
+    }
+
+    .progress-text {
+        font-size: 0.85rem;
+        color: #666;
+        text-align: center;
+    }
+
+    /* Shopping List */
+    .download-btn {
+        background: linear-gradient(135deg, #00b894, #00a085);
+        color: white;
+        border: none;
+        padding: 8px 15px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .download-btn:hover {
+        transform: scale(1.05);
+    }
+
+    .ingredients-list {
+        list-style: none;
+        max-height: 300px;
+        overflow-y: auto;
+    }
+
+    .ingredient-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 1px solid #f0f0f0;
+        transition: all 0.3s ease;
+    }
+
+    .ingredient-item:hover {
+        background: rgba(233, 30, 99, 0.02);
+        padding-left: 10px;
+    }
+
+    .ingredient-name {
+        font-weight: 500;
+        color: #333;
+    }
+
+    .ingredient-amount {
+        color: #e91e63;
+        font-weight: 600;
+        background: rgba(233, 30, 99, 0.1);
+        padding: 4px 12px;
+        border-radius: 15px;
+        font-size: 0.9rem;
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 30px;
+        color: #888;
+    }
+
+    .empty-icon {
+        font-size: 3rem;
+        margin-bottom: 15px;
+        opacity: 0.5;
+    }
+
+    .empty-message {
+        font-style: italic;
+        line-height: 1.5;
+    }
+
+    /* Responsive Design */
+    @@media (max-width: 768px) {
+        .navigation-header {
             flex-direction: column;
-            gap: 12px;
+            padding: 10px 0;
         }
-        
-        .profile-item {
-            display: flex;
-            justify-content: space-between;
+
+        .nav-tabs {
+            flex-wrap: wrap;
+            padding: 0 10px;
+            justify-content: center;
+        }
+
+        .nav-actions {
+            padding: 10px 20px 0;
+            justify-content: center;
+        }
+
+        .nav-tab {
+            padding: 12px 15px;
+            font-size: 14px;
+        }
+
+        .profile-container {
+            padding: 20px 15px;
+        }
+
+        .profile-header {
+            flex-direction: column;
+            gap: 15px;
+            text-align: center;
+        }
+
+        .profile-title {
+            font-size: 2rem;
+        }
+
+        .profile-content {
+            grid-template-columns: 1fr;
+        }
+
+        .nutrition-card {
+            grid-column: span 1;
+        }
+
+        .nutrition-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @@media (max-width: 480px) {
+        .nav-tabs {
+            flex-direction: column;
             align-items: center;
         }
-        
-        .profile-label {
-            font-weight: 600;
-            color: #555;
-        }
-        
-        .profile-value {
-            color: #333;
-        }
-        
-        .profile-value.underweight {
-            color: #ff9800;
-        }
-        
-        .profile-value.normal {
-            color: #4caf50;
-        }
-        
-        .profile-value.overweight {
-            color: #f44336;
-        }
-        
-        .profile-actions {
-            display: flex;
+
+        .nav-actions {
+            flex-direction: column;
             gap: 10px;
-            margin-top: 20px;
         }
-        
-        .profile-button {
-            background-color: #e91e63;
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 5px;
-            font-size: 1rem;
-            font-weight: bold;
-            cursor: pointer;
-            text-decoration: none;
-            text-align: center;
+
+        .nutrition-grid {
+            gap: 10px;
         }
-        
-        .profile-button:hover {
-            background-color: #c2185b;
-        }
-        
-        .stats-container {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-        }
-        
-        .stat-card {
-            background-color: #f9f9f9;
+
+        .nutrition-item {
             padding: 15px;
-            border-radius: 8px;
-            text-align: center;
         }
-        
-        .stat-value {
-            font-size: 2rem;
-            font-weight: bold;
-            color: #e91e63;
+
+        .nutrition-value {
+            font-size: 1.3rem;
         }
-        
-        .stat-label {
-            font-size: 0.9rem;
-            color: #666;
-            margin-top: 5px;
-        }
-        
-        .daily-summary {
-            margin-top: 10px;
-        }
-        
-        .summary-item {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 10px;
-        }
-        
-        .summary-label {
-            font-weight: 600;
-            color: #555;
-        }
-        
-        .summary-value {
-            color: #333;
-        }
-        
-        .summary-progress {
-            margin-top: 15px;
-        }
-        
-        .progress-bar {
-            height: 12px;
-            background-color: #f0f0f0;
-            border-radius: 6px;
-            overflow: hidden;
-        }
-        
-        .progress-fill {
-            height: 100%;
-            background-color: #e91e63;
-        }
-        
-        .progress-text {
-            font-size: 0.8rem;
-            color: #666;
-            text-align: right;
-            margin-top: 5px;
-        }
-        
-        .shopping-list {
-            max-height: 300px;
-            overflow-y: auto;
-        }
-        
-        .ingredients-list {
-            list-style-type: none;
-            padding: 0;
-            margin: 0;
-        }
-        
-        .ingredient-item {
-            padding: 8px 0;
-            border-bottom: 1px solid #eee;
-        }
-        
-        .ingredient-item:last-child {
-            border-bottom: none;
-        }
-        
-        .empty-list-message {
-            color: #666;
-            font-style: italic;
-            text-align: center;
-            margin: 15px 0;
-        }
-        
-        @@media (max-width: 768px) {
-            .profile-content {
-                flex-direction: column;
-            }
-            
-            .stats-container {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-    </style>
-}
+    }
+</style>
 
 @functions {
     string GetBmiClass(double bmi)
