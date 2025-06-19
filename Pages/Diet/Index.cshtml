@@ -759,6 +759,7 @@
             color: #888;
             font-style: italic;
             margin-top: 10px;
+            font-size: 0.9rem;
         }
 
         .recipe-view-rating {
@@ -819,11 +820,35 @@
         .ingredient-name {
             font-weight: 600;
             color: #333;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .ingredient-name small {
+            font-weight: normal;
+            opacity: 0.7;
         }
 
         .ingredient-amount {
             color: #e91e63;
             font-weight: 600;
+        }
+
+        .ingredients-note {
+            margin-top: 15px;
+            padding: 12px 15px;
+            background: linear-gradient(135deg, #e8f5e8, #d4edda);
+            border-radius: 8px;
+            border-left: 4px solid #28a745;
+            font-size: 0.9rem;
+            color: #155724;
+            text-align: center;
+        }
+
+        .ingredients-note small {
+            font-size: 0.8rem;
+            opacity: 0.8;
         }
 
         .recipe-view-instructions {
@@ -870,6 +895,284 @@
             background: #f8d7da;
             border-radius: 10px;
             margin: 20px 0;
+        }
+
+        /* Recipe Rating Section */
+        .recipe-rating-section {
+            margin-top: 30px;
+            padding: 25px;
+            background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+            border-radius: 15px;
+            border: 2px solid #ffc107;
+        }
+
+        .rating-section-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #856404;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .rating-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .star-rating {
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+
+        .star {
+            font-size: 2.5rem;
+            color: #ddd;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            user-select: none;
+        }
+
+        .star:hover,
+        .star.active {
+            color: #ffd700;
+            transform: scale(1.1);
+        }
+
+        .star:hover ~ .star {
+            color: #ddd;
+        }
+
+        .rating-comment {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .rating-textarea {
+            width: 100%;
+            min-height: 100px;
+            padding: 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-family: inherit;
+            resize: vertical;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .rating-textarea:focus {
+            border-color: #ffc107;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.2);
+        }
+
+        .rating-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .rating-submit-btn {
+            background: linear-gradient(135deg, #ffc107, #e0a800);
+            color: #212529;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .rating-submit-btn:hover:not(:disabled) {
+            background: linear-gradient(135deg, #e0a800, #d39e00);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
+        }
+
+        .rating-submit-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .rating-help {
+            color: #856404;
+            font-size: 0.9rem;
+            font-style: italic;
+        }
+
+        .rating-success {
+            background: linear-gradient(135deg, #d4edda, #c3e6cb);
+            border: 2px solid #28a745;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            color: #155724;
+            font-weight: 600;
+            margin-top: 15px;
+        }
+
+        .rating-error {
+            background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+            border: 2px solid #dc3545;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            color: #721c24;
+            font-weight: 600;
+            margin-top: 15px;
+        }
+
+        .existing-rating {
+            background: linear-gradient(135deg, #d1ecf1, #bee5eb);
+            border: 2px solid #17a2b8;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 15px;
+        }
+
+        .existing-rating-title {
+            font-weight: 600;
+            color: #0c5460;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .existing-rating-stars {
+            text-align: center;
+            font-size: 1.5rem;
+            color: #ffd700;
+            margin-bottom: 10px;
+        }
+
+        .existing-rating-comment {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            color: #444;
+            font-style: italic;
+            border-left: 4px solid #17a2b8;
+        }
+
+        .existing-rating-date {
+            text-align: center;
+            color: #0c5460;
+            font-size: 0.8rem;
+            margin-top: 10px;
+        }
+
+        /* Rating Prompt Modal */
+        .rating-prompt-content {
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .rating-prompt-header {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+        }
+
+        .rating-prompt-body {
+            padding: 40px 30px;
+        }
+
+        .rating-prompt-content-inner {
+            text-align: center;
+        }
+
+        .rating-prompt-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            animation: bounce 2s infinite;
+        }
+
+        @@keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateY(0);
+            }
+            40% {
+                transform: translateY(-10px);
+            }
+            60% {
+                transform: translateY(-5px);
+            }
+        }
+
+        .rating-prompt-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .rating-prompt-text {
+            font-size: 1.1rem;
+            color: #666;
+            margin-bottom: 30px;
+            line-height: 1.5;
+        }
+
+        .rating-prompt-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .rating-prompt-btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .rating-prompt-btn.btn-primary {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+        }
+
+        .rating-prompt-btn.btn-primary:hover {
+            background: linear-gradient(135deg, #218838, #1ea085);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+        }
+
+        .rating-prompt-btn.btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .rating-prompt-btn.btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        .rating-prompt-note {
+            background: linear-gradient(135deg, #e8f5e8, #d4edda);
+            border: 1px solid #c3e6cb;
+            border-radius: 10px;
+            padding: 15px;
+            font-size: 0.9rem;
+            color: #155724;
+            font-style: italic;
         }
         }
 
@@ -1550,6 +1853,42 @@
             <a href="/Dietitian" class="nav-tab">Twój dietetyk</a>
         </div>
 
+    <!-- Rating Prompt Modal -->
+    <div class="modal" id="ratingPromptModal">
+        <div class="modal-content rating-prompt-content">
+            <div class="modal-header rating-prompt-header">
+                <div>
+                    <h2 class="modal-title">🍽️ Zjadłeś przepis!</h2>
+                    <p class="modal-subtitle" id="ratingPromptSubtitle"></p>
+                </div>
+                <button type="button" class="close-modal" onclick="closeRatingPrompt()">×</button>
+            </div>
+
+            <div class="modal-body rating-prompt-body">
+                <div class="rating-prompt-content-inner">
+                    <div class="rating-prompt-icon">⭐</div>
+                    <h3 class="rating-prompt-title" id="ratingPromptRecipeName">Nazwa przepisu</h3>
+                    <p class="rating-prompt-text">
+                        Jak Ci smakowało? Podziel się swoją opinią z innymi użytkownikami!
+                    </p>
+                    
+                    <div class="rating-prompt-actions">
+                        <button type="button" class="btn btn-primary rating-prompt-btn" onclick="openRatingFromPrompt()">
+                            ⭐ Oceń przepis
+                        </button>
+                        <button type="button" class="btn btn-secondary rating-prompt-btn" onclick="closeRatingPrompt()">
+                            🚫 Może później
+                        </button>
+                    </div>
+                    
+                    <div class="rating-prompt-note">
+                        💡 Twoja ocena pomoże innym użytkownikom w wyborze przepisów
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Recipe View Modal -->
     <div class="modal" id="recipeViewModal">
         <div class="modal-content">
@@ -1833,6 +2172,8 @@
             'Przekaska': '🍎 Przekąska'
         };
         
+        console.log('Meal type names mapping:', mealTypeNames);
+        
         let currentMealDate = null;
         let selectedRecipe = null;
         let selectedMealType = null;
@@ -1882,7 +2223,12 @@
 
         function renderMeals(dateStr) {
             const dayMeals = meals[dateStr] || [];
-            return dayMeals.map(meal => `
+            console.log('Rendering meals for', dateStr, ':', dayMeals);
+            
+            return dayMeals.map(meal => {
+                console.log('Rendering meal:', meal, 'Type:', meal.type, 'MealType name:', mealTypeNames[meal.type]);
+                
+                return `
                 <div class="meal-item ${meal.eaten ? 'eaten' : ''} ${meal.hasCustomNutrition ? 'custom-nutrition' : ''}">
                     <div class="meal-header">
                         <div class="meal-type">${mealTypeNames[meal.type] || meal.type}</div>
@@ -1901,7 +2247,8 @@
                     </div>
                     ${meal.gramature && meal.gramature !== 100 ? `<div style="font-size: 0.7rem; color: #888; margin-top: 5px;">Gramatura: ${meal.gramature}g</div>` : ''}
                 </div>
-            `).join('');
+            `;
+            }).join('');
         }
 
         function updateWeekDisplay() {
@@ -1924,11 +2271,33 @@
 
         function openMealModal(dateStr) {
             currentMealDate = dateStr;
-            const date = new Date(dateStr);
+            console.log('=== OPENING MEAL MODAL ===');
+            console.log('Input dateStr:', dateStr);
+            console.log('Setting currentMealDate to:', currentMealDate);
+            
+            // Sprawdź czy data jest w prawidłowym formacie
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+                console.error('Invalid date format:', dateStr);
+                return;
+            }
+            
+            const date = new Date(dateStr + 'T12:00:00'); // Dodaj czas żeby uniknąć problemów z timezone
+            console.log('Created date object:', date);
+            console.log('Date toISOString:', date.toISOString());
+            console.log('Date getDay():', date.getDay());
+            
             const dayIndex = date.getDay();
             const adjustedDayIndex = dayIndex === 0 ? 6 : dayIndex - 1;
             const dayName = dayNames[adjustedDayIndex];
             const dateDisplay = `${date.getDate().toString().padStart(2, '0')}.${(date.getMonth() + 1).toString().padStart(2, '0')}`;
+            
+            console.log('Date processing:', {
+                dayIndex,
+                adjustedDayIndex,
+                dayName,
+                dateDisplay
+            });
+            
             document.getElementById('modalDate').textContent = `${dayName}, ${dateDisplay}`;
             document.getElementById('mealModal').classList.add('show');
             
@@ -2084,6 +2453,8 @@
             }
         }
 
+        let currentRating = 0;
+
         // Event listeners setup
         document.addEventListener('DOMContentLoaded', function() {
             // Meal type selection
@@ -2157,6 +2528,31 @@
                     sortRecipes();
                 });
             }
+
+            // Star rating interactions
+            document.addEventListener('click', function(e) {
+                if (e.target.classList.contains('star')) {
+                    const rating = parseInt(e.target.dataset.rating);
+                    const recipeId = e.target.parentElement.dataset.recipeId;
+                    selectStarRating(recipeId, rating);
+                }
+            });
+
+            document.addEventListener('mouseover', function(e) {
+                if (e.target.classList.contains('star')) {
+                    const rating = parseInt(e.target.dataset.rating);
+                    const stars = e.target.parentElement.querySelectorAll('.star');
+                    highlightStars(stars, rating);
+                }
+            });
+
+            document.addEventListener('mouseout', function(e) {
+                if (e.target.classList.contains('star')) {
+                    const recipeId = e.target.parentElement.dataset.recipeId;
+                    const stars = e.target.parentElement.querySelectorAll('.star');
+                    resetStars(stars, currentRating);
+                }
+            });
         });
 
         function selectRecipe(recipeId, recipeName, calories, protein, carbs, fat) {
@@ -2313,14 +2709,16 @@
             }
 
             // Formatuj datę prawidłowo dla serwera (YYYY-MM-DD)
-            const dateObj = new Date(currentMealDate);
-            const formattedDate = dateObj.toISOString().split('T')[0];
+            console.log('Current meal date before formatting:', currentMealDate);
+            const formattedDate = currentMealDate; // Już jest w formacie YYYY-MM-DD
 
             let mealData = {
                 date: formattedDate,
                 mealType: selectedMealType,
                 gramature: gramature
             };
+
+            console.log('Meal data being prepared:', mealData);
 
             if (currentTab === 'recipe') {
                 if (!selectedRecipe) {
@@ -2434,7 +2832,7 @@
                         hasCustomNutrition: newMeal.hasCustomNutrition || false
                     };
                     
-                    console.log('Adding meal to local data:', mealToAdd);
+                    console.log('Adding meal to local data for date:', currentMealDate, 'Meal:', mealToAdd);
                     meals[currentMealDate].push(mealToAdd);
 
                     // Refresh the day's meals
@@ -2519,7 +2917,26 @@
                     // Group meals by date
                     allMeals.forEach(meal => {
                         if (meal.date) {
-                            const dateStr = new Date(meal.date).toISOString().split('T')[0];
+                            // Lepsze parsowanie daty - może być problem z timezone
+                            let dateStr;
+                            try {
+                                // Sprawdź różne formaty daty
+                                const mealDate = new Date(meal.date);
+                                console.log('Original date from server:', meal.date);
+                                console.log('Parsed date object:', mealDate);
+                                console.log('UTC date string:', mealDate.toISOString());
+                                
+                                // Użyj lokalnej daty zamiast UTC
+                                const year = mealDate.getFullYear();
+                                const month = String(mealDate.getMonth() + 1).padStart(2, '0');
+                                const day = String(mealDate.getDate()).padStart(2, '0');
+                                dateStr = `${year}-${month}-${day}`;
+                                
+                                console.log('Final dateStr:', dateStr);
+                            } catch (error) {
+                                console.error('Date parsing error:', error);
+                                dateStr = meal.date.split('T')[0]; // Fallback
+                            }
                             
                             if (!meals[dateStr]) {
                                 meals[dateStr] = [];
@@ -2528,9 +2945,32 @@
                             // Calculate actual nutrition values based on gramature
                             const multiplier = (meal.gramature || 100) / 100;
                             
-                            meals[dateStr].push({
+                            // Mapuj typ posiłku z liczby na tekst
+                            let mealTypeName;
+                            switch(meal.mealType) {
+                                case 0:
+                                case "Sniadanie":
+                                    mealTypeName = "Sniadanie";
+                                    break;
+                                case 1:
+                                case "Obiad":
+                                    mealTypeName = "Obiad";
+                                    break;
+                                case 2:
+                                case "Kolacja":
+                                    mealTypeName = "Kolacja";
+                                    break;
+                                case 3:
+                                case "Przekaska":
+                                    mealTypeName = "Przekaska";
+                                    break;
+                                default:
+                                    mealTypeName = meal.mealType || "Nieznany";
+                            }
+                            
+                            const mealToAdd = {
                                 id: meal.id,
-                                type: meal.mealType,
+                                type: mealTypeName, // Używaj zmapowanego typu
                                 recipeName: meal.recipe?.name,
                                 customEntry: meal.customEntry,
                                 calories: Math.round((meal.calories || 0) * multiplier),
@@ -2540,7 +2980,16 @@
                                 gramature: meal.gramature,
                                 eaten: meal.eaten,
                                 hasCustomNutrition: meal.hasCustomNutrition
+                            };
+                            
+                            console.log('Loading meal from server:', {
+                                originalMealType: meal.mealType,
+                                mappedMealType: mealTypeName,
+                                date: dateStr,
+                                meal: mealToAdd
                             });
+                            
+                            meals[dateStr].push(mealToAdd);
                         }
                     });
                     
@@ -2582,6 +3031,13 @@
                     const today = new Date().toISOString().split('T')[0];
                     if (dateStr === today) {
                         updateDailySummary();
+                    }
+
+                    // Jeśli posiłek został oznaczony jako zjedzony i ma przepis - pokaż opcję oceniania
+                    if (newEatenStatus && meal.recipeName) {
+                        setTimeout(() => {
+                            showRatingPrompt(meal, dateStr, mealId);
+                        }, 500); // Małe opóźnienie dla lepszego UX
                     }
                 } else {
                     alert('Błąd podczas aktualizacji statusu posiłku');
@@ -2657,16 +3113,47 @@
 
                 if (recipe) {
                     // Pobierz szczegółowe dane przepisu z składnikami
-                    console.log('Fetching detailed recipe data for ID:', recipe.id);
+                    console.log('Fetching detailed recipe data for ID:', recipe.id, 'Gramature:', meal.gramature);
+                    console.log('API endpoint:', `/api/recipe/${recipe.id}`);
+                    
                     const detailResponse = await fetch(`/api/recipe/${recipe.id}`);
+                    
+                    console.log('API Response status:', detailResponse.status);
+                    console.log('API Response headers:', detailResponse.headers);
                     
                     if (detailResponse.ok) {
                         const detailedRecipe = await detailResponse.json();
+                        console.log('=== DETAILED RECIPE DATA ===');
+                        console.log('Full recipe object:', detailedRecipe);
+                        console.log('Recipe ingredients:', detailedRecipe.recipeIngredients);
+                        console.log('Number of ingredients:', detailedRecipe.recipeIngredients?.length || 0);
+                        
+                        if (detailedRecipe.recipeIngredients && detailedRecipe.recipeIngredients.length > 0) {
+                            console.log('=== INGREDIENTS DETAILS ===');
+                            detailedRecipe.recipeIngredients.forEach((ri, index) => {
+                                console.log(`Ingredient ${index + 1}:`, {
+                                    id: ri.id,
+                                    recipeId: ri.recipeId,
+                                    ingredientId: ri.ingredientId,
+                                    amount: ri.amount,
+                                    ingredient: ri.ingredient,
+                                    ingredientName: ri.ingredient?.name
+                                });
+                            });
+                        } else {
+                            console.warn('No ingredients found in detailed recipe!');
+                        }
+                        
                         showRecipeViewModal(meal.recipeName, detailedRecipe, meal.gramature);
                     } else {
+                        const errorText = await detailResponse.text();
+                        console.error('Failed to get detailed recipe');
+                        console.error('Response status:', detailResponse.status);
+                        console.error('Response text:', errorText);
                         showRecipeViewModal(meal.recipeName, recipe, meal.gramature);
                     }
                 } else {
+                    console.warn('Recipe not found for meal:', meal.recipeName);
                     showRecipeViewModal(meal.recipeName, null);
                 }
             } catch (error) {
@@ -2676,6 +3163,11 @@
         }
 
         function showRecipeViewModal(recipeName, recipe, gramature = 100) {
+            console.log('=== SHOW RECIPE VIEW MODAL ===');
+            console.log('Recipe name:', recipeName);
+            console.log('Recipe object:', recipe);
+            console.log('Gramature:', gramature);
+            
             document.getElementById('recipeViewTitle').textContent = recipeName;
             document.getElementById('recipeViewSubtitle').textContent = gramature ? `Porcja: ${gramature}g` : '';
             
@@ -2737,21 +3229,75 @@
                                 <div class="nutrition-label">Tłuszcze</div>
                             </div>
                         </div>
-                        <div class="nutrition-note">Wartości przeliczone na porcję ${gramature}g</div>
+                        <div class="nutrition-note">Wartości przeliczone na porcję <strong>${gramature}g</strong> (bazowo: 100g)</div>
 
                         ${recipe.recipeIngredients && recipe.recipeIngredients.length > 0 ? `
                             <div class="recipe-view-ingredients">
-                                <h4 class="ingredients-title">🥕 Składniki</h4>
+                                <h4 class="ingredients-title">🥕 Składniki na ${gramature}g</h4>
                                 <div class="ingredients-list">
-                                    ${recipe.recipeIngredients.map(ri => `
-                                        <div class="ingredient-item">
-                                            <span class="ingredient-name">${ri.ingredient?.name || 'Nieznany składnik'}</span>
-                                            <span class="ingredient-amount">${ri.amount ? (ri.amount * multiplier).toFixed(1) : '?'}g</span>
-                                        </div>
-                                    `).join('')}
+                                    ${(() => {
+                                        // Oblicz całkowitą masę wszystkich składników
+                                        const totalMass = recipe.recipeIngredients.reduce((sum, ri) => {
+                                            return sum + (ri.amount || 0);
+                                        }, 0);
+                                        
+                                        console.log('Total mass of all ingredients:', totalMass);
+                                        console.log('Target portion:', gramature);
+                                        
+                                        if (totalMass === 0) {
+                                            return '<div class="no-instructions">Brak informacji o ilościach składników</div>';
+                                        }
+                                        
+                                        return recipe.recipeIngredients.map(ri => {
+                                            console.log('Processing ingredient:', ri);
+                                            const baseAmount = ri.amount || 0;
+                                            
+                                            // Oblicz proporcję tego składnika w całości
+                                            const proportion = baseAmount / totalMass;
+                                            
+                                            // Oblicz ilość dla docelowej porcji
+                                            const scaledAmount = proportion * gramature;
+                                            
+                                            console.log(`Ingredient: ${ri.ingredient?.name}, Base: ${baseAmount}g, Proportion: ${(proportion * 100).toFixed(1)}%, Scaled: ${scaledAmount.toFixed(1)}g`);
+                                            
+                                            // Formatowanie ilości w zależności od wielkości
+                                            let formattedAmount;
+                                            if (scaledAmount === 0) {
+                                                formattedAmount = '0g';
+                                            } else if (scaledAmount < 1) {
+                                                formattedAmount = `${(scaledAmount * 1000).toFixed(0)}mg`;
+                                            } else if (scaledAmount < 10) {
+                                                formattedAmount = `${scaledAmount.toFixed(1)}g`;
+                                            } else {
+                                                formattedAmount = `${scaledAmount.toFixed(0)}g`;
+                                            }
+                                            
+                                            return `
+                                                <div class="ingredient-item">
+                                                    <span class="ingredient-name">
+                                                        ${ri.ingredient?.name || 'Nieznany składnik'}
+                                                        <small style="color: #888; font-size: 0.8rem;">(${(proportion * 100).toFixed(1)}%)</small>
+                                                    </span>
+                                                    <span class="ingredient-amount">${formattedAmount}</span>
+                                                </div>
+                                            `;
+                                        }).join('');
+                                    })()}
+                                </div>
+                                <div class="ingredients-note">
+                                    💡 Składniki przeliczone proporcjonalnie dla porcji <strong>${gramature}g</strong>
+                                    <br><small>Przepis bazowy: ${(() => {
+                                        const totalMass = recipe.recipeIngredients.reduce((sum, ri) => sum + (ri.amount || 0), 0);
+                                        return totalMass > 0 ? `${totalMass}g` : '?g';
+                                    })()} składników</small>
                                 </div>
                             </div>
-                        ` : ''}
+                        ` : `
+                            <div class="recipe-view-ingredients">
+                                <h4 class="ingredients-title">🥕 Składniki</h4>
+                                <div class="no-instructions">Brak informacji o składnikach tego przepisu</div>
+                            </div>
+                        `}
 
                         <div class="recipe-view-instructions">
                             <h4 class="instructions-title">📋 Instrukcje przygotowania</h4>
@@ -2761,15 +3307,189 @@
                                 <div class="no-instructions">Brak instrukcji przygotowania</div>
                             `}
                         </div>
+
+                        ${gramature ? `
+                            <div class="recipe-rating-section">
+                                <h4 class="rating-section-title">⭐ Oceń ten przepis</h4>
+                                <div class="rating-form" id="ratingForm-${recipe.id}">
+                                    <div class="star-rating" data-recipe-id="${recipe.id}">
+                                        <span class="star" data-rating="1">☆</span>
+                                        <span class="star" data-rating="2">☆</span>
+                                        <span class="star" data-rating="3">☆</span>
+                                        <span class="star" data-rating="4">☆</span>
+                                        <span class="star" data-rating="5">☆</span>
+                                    </div>
+                                    <div class="rating-comment">
+                                        <textarea 
+                                            id="ratingComment-${recipe.id}" 
+                                            class="rating-textarea" 
+                                            placeholder="Podziel się swoją opinią o tym przepisie... (opcjonalne)"
+                                            maxlength="500"
+                                        ></textarea>
+                                        <div class="rating-actions">
+                                            <button 
+                                                type="button" 
+                                                class="btn btn-primary rating-submit-btn" 
+                                                onclick="submitRating(${recipe.id})"
+                                                disabled
+                                            >
+                                                💬 Wystaw opinię
+                                            </button>
+                                            <div class="rating-help">Kliknij gwiazdki aby wystawić ocenę</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        ` : ''}
                     </div>
                 `;
             }
             
             document.getElementById('recipeViewModal').classList.add('show');
+            
+            // Check if user already rated this recipe
+            if (recipe && recipe.id) {
+                checkExistingRating(recipe.id);
+            }
+        }
+
+        function highlightStars(stars, rating) {
+            stars.forEach((star, index) => {
+                if (index < rating) {
+                    star.textContent = '★';
+                    star.classList.add('active');
+                } else {
+                    star.textContent = '☆';
+                    star.classList.remove('active');
+                }
+            });
+        }
+
+        function resetStars(stars, rating) {
+            stars.forEach((star, index) => {
+                if (index < rating) {
+                    star.textContent = '★';
+                    star.classList.add('active');
+                } else {
+                    star.textContent = '☆';
+                    star.classList.remove('active');
+                }
+            });
+        }
+
+        function selectStarRating(recipeId, rating) {
+            currentRating = rating;
+            const stars = document.querySelector(`[data-recipe-id="${recipeId}"]`).querySelectorAll('.star');
+            highlightStars(stars, rating);
+            
+            // Enable submit button
+            const submitBtn = document.querySelector(`.rating-submit-btn[onclick="submitRating(${recipeId})"]`);
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.querySelector('.rating-help') && (submitBtn.querySelector('.rating-help').textContent = 'Kliknij aby wysłać opinię');
+            }
+        }
+
+        async function submitRating(recipeId) {
+            if (currentRating === 0) {
+                alert('Proszę wybrać ocenę (gwiazdki)');
+                return;
+            }
+
+            const comment = document.getElementById(`ratingComment-${recipeId}`).value.trim();
+            const submitBtn = document.querySelector(`.rating-submit-btn[onclick="submitRating(${recipeId})"]`);
+            
+            // Disable button and show loading
+            const originalText = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '⏳ Wysyłanie...';
+
+            try {
+                const response = await fetch(`/api/recipe/${recipeId}/rate`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        rating: currentRating,
+                        comment: comment
+                    })
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    console.log('Rating submitted successfully:', result);
+                    
+                    // Show success message
+                    const ratingForm = document.getElementById(`ratingForm-${recipeId}`);
+                    ratingForm.innerHTML = `
+                        <div class="rating-success">
+                            ✅ Dziękujemy za opinię! Twoja ocena: ${currentRating}/5 ⭐
+                            ${comment ? `<div style="margin-top: 10px; font-style: italic;">"${comment}"</div>` : ''}
+                            <div style="margin-top: 10px; font-size: 0.9rem;">
+                                Nowa średnia ocena: ${result.averageRating}/5 (${result.ratingCount} ocen)
+                            </div>
+                        </div>
+                    `;
+                    
+                    // Update recipe rating in recipes array
+                    const recipe = recipes.find(r => r.id === recipeId);
+                    if (recipe) {
+                        recipe.averageRating = result.averageRating;
+                        recipe.ratingCount = result.ratingCount;
+                    }
+                    
+                    // Reset current rating
+                    currentRating = 0;
+                    
+                } else {
+                    let errorMessage = 'Błąd podczas wysyłania opinii';
+                    try {
+                        const errorData = await response.json();
+                        if (errorData.message) {
+                            errorMessage = errorData.message;
+                        }
+                    } catch (e) {
+                        const errorText = await response.text();
+                        if (errorText) {
+                            errorMessage = errorText;
+                        }
+                    }
+                    
+                    // Show error message
+                    const ratingForm = document.getElementById(`ratingForm-${recipeId}`);
+                    ratingForm.innerHTML += `
+                        <div class="rating-error">
+                            ❌ ${errorMessage}
+                        </div>
+                    `;
+                    
+                    // Restore button
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalText;
+                }
+            } catch (error) {
+                console.error('Error submitting rating:', error);
+                
+                // Show error message
+                const ratingForm = document.getElementById(`ratingForm-${recipeId}`);
+                ratingForm.innerHTML += `
+                    <div class="rating-error">
+                        ❌ Błąd połączenia z serwerem
+                    </div>
+                `;
+                
+                // Restore button
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            }
         }
 
         function closeRecipeViewModal() {
             document.getElementById('recipeViewModal').classList.remove('show');
+            currentRating = 0; // Reset rating when closing modal
         }
 
         function editMeal(dateStr, mealId) {
@@ -2829,6 +3549,13 @@
         document.getElementById('recipeViewModal').addEventListener('click', function(e) {
             if (e.target === this) {
                 closeRecipeViewModal();
+            }
+        });
+
+        // Close rating prompt when clicking outside
+        document.getElementById('ratingPromptModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeRatingPrompt();
             }
         });
 
