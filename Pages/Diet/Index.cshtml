@@ -1841,6 +1841,177 @@
                 grid-template-columns: repeat(2, 1fr);
             }
         }
+        /* Ingredients proportions visualization */
+        .ingredients-proportions {
+            margin: 20px 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-radius: 12px;
+            border: 1px solid #dee2e6;
+        }
+
+        .proportion-bar {
+            height: 30px;
+            background: #f0f0f0;
+            border-radius: 15px;
+            overflow: hidden;
+            display: flex;
+            margin-bottom: 15px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .proportion-segment {
+            height: 100%;
+            transition: all 0.3s ease;
+            position: relative;
+            min-width: 2px;
+        }
+
+        .proportion-segment:hover {
+            filter: brightness(1.1);
+            transform: scaleY(1.05);
+        }
+
+        .proportion-legend {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 10px;
+            background: white;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            border: 2px solid white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+
+        .legend-text {
+            font-weight: 500;
+            color: #333;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Enhanced ingredient items */
+        .ingredient-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+
+        .ingredient-item:last-child {
+            border-bottom: none;
+        }
+
+        .ingredient-item:hover {
+            background: rgba(233, 30, 99, 0.02);
+            padding-left: 10px;
+            padding-right: 10px;
+            border-radius: 8px;
+        }
+
+        .ingredient-name {
+            font-weight: 600;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex: 1;
+        }
+
+        .ingredient-percentage {
+            font-weight: normal;
+            color: #666;
+            font-size: 0.8rem;
+            opacity: 0.8;
+        }
+
+        .ingredient-amount {
+            color: #e91e63;
+            font-weight: 700;
+            background: rgba(233, 30, 99, 0.1);
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-size: 0.9rem;
+            min-width: 60px;
+            text-align: center;
+        }
+
+        .no-proportions {
+            text-align: center;
+            color: #888;
+            font-style: italic;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px dashed #ddd;
+        }
+
+        /* Responsive design for proportions */
+        @@media (max-width: 768px) {
+            .proportion-legend {
+                grid-template-columns: 1fr;
+            }
+            
+            .legend-item {
+                font-size: 0.8rem;
+            }
+            
+            .ingredient-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+                padding: 12px 0;
+            }
+            
+            .ingredient-amount {
+                align-self: flex-end;
+            }
+            
+            .proportion-bar {
+                height: 25px;
+            }
+        }
+
+        @@media (max-width: 480px) {
+            .ingredients-proportions {
+                margin: 15px 0;
+                padding: 15px;
+            }
+            
+            .proportion-bar {
+                height: 20px;
+                margin-bottom: 12px;
+            }
+            
+            .legend-item {
+                padding: 4px 8px;
+                font-size: 0.75rem;
+            }
+            
+            .legend-color {
+                width: 14px;
+                height: 14px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -3083,82 +3254,275 @@
                 alert('Błąd podczas usuwania posiłku');
             }
         }
-
+        async function debugRecipeAPI(recipeId) {
+            console.log('=== DEBUGGING RECIPE API ===');
+            console.log('Recipe ID:', recipeId);
+            
+            try {
+                const response = await fetch(`/api/recipe/${recipeId}`);
+                console.log('API Response status:', response.status);
+                console.log('API Response headers:', [...response.headers.entries()]);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('=== FULL API RESPONSE ===');
+                    console.log('Recipe data:', data);
+                    console.log('Recipe ingredients:', data.recipeIngredients);
+                    
+                    if (data.recipeIngredients) {
+                        console.log('Ingredients count:', data.recipeIngredients.length);
+                        data.recipeIngredients.forEach((ri, index) => {
+                            console.log(`Ingredient ${index}:`, {
+                                id: ri.id,
+                                recipeId: ri.recipeId,
+                                ingredientId: ri.ingredientId,
+                                amount: ri.amount,
+                                ingredient: ri.ingredient
+                            });
+                        });
+                    } else {
+                        console.warn('recipeIngredients is null or undefined');
+                    }
+                    
+                    return data;
+                } else {
+                    const errorText = await response.text();
+                    console.error('API Error:', errorText);
+                    return null;
+                }
+            } catch (error) {
+                console.error('API Exception:', error);
+                return null;
+            }
+        }
+        async function testRecipeAPI() {
+            console.log('=== TESTING RECIPE API ===');
+            
+            // Test wszystkich przepisów
+            try {
+                const allRecipesResponse = await fetch('/api/recipe');
+                if (allRecipesResponse.ok) {
+                    const allRecipes = await allRecipesResponse.json();
+                    console.log('All recipes:', allRecipes);
+                    
+                    if (allRecipes.length > 0) {
+                        const firstRecipe = allRecipes[0];
+                        console.log('Testing first recipe:', firstRecipe.name, 'ID:', firstRecipe.id);
+                        
+                        // Test szczegółów pierwszego przepisu
+                        await debugRecipeAPI(firstRecipe.id);
+                    }
+                }
+            } catch (error) {
+                console.error('Test failed:', error);
+            }
+        }
         async function viewRecipe(dateStr, mealId) {
             try {
-                console.log('Viewing recipe for meal:', mealId);
+                console.log('=== VIEWING RECIPE FOR MEAL ===');
+                console.log('Date:', dateStr, 'Meal ID:', mealId);
                 
                 // Znajdź posiłek w lokalnych danych
                 const meal = meals[dateStr]?.find(m => m.id === mealId);
                 if (!meal || !meal.recipeName) {
+                    console.error('Meal or recipe name not found:', meal);
                     alert('Nie można znaleźć przepisu dla tego posiłku');
                     return;
                 }
 
-                // Znajdź pełne dane przepisu
+                console.log('Found meal:', meal);
+
+                // Znajdź pełne dane przepisu w lokalnej pamięci
                 let recipe = recipes.find(r => r.name === meal.recipeName);
                 
                 if (!recipe) {
-                    // Jeśli nie ma w lokalnej pamięci, spróbuj pobrać z serwera
-                    console.log('Recipe not found locally, fetching from server...');
-                    showRecipeViewModal(meal.recipeName, null); // Pokaż loading
+                    console.log('Recipe not found locally, fetching all recipes from server...');
+                    showRecipeViewModal(meal.recipeName, null, meal.gramature);
                     
                     const response = await fetch('/api/recipe');
                     if (response.ok) {
                         const allRecipes = await response.json();
                         recipe = allRecipes.find(r => r.name === meal.recipeName);
-                        recipes = allRecipes; // Aktualizuj lokalną pamięć
+                        recipes = allRecipes;
+                        console.log('Updated recipes cache, found recipe:', recipe?.name);
+                    } else {
+                        console.error('Failed to fetch recipes:', response.status);
+                        showRecipeViewModal(meal.recipeName, null, meal.gramature);
+                        return;
                     }
                 }
 
                 if (recipe) {
-                    // Pobierz szczegółowe dane przepisu z składnikami
-                    console.log('Fetching detailed recipe data for ID:', recipe.id, 'Gramature:', meal.gramature);
-                    console.log('API endpoint:', `/api/recipe/${recipe.id}`);
+                    console.log('Found recipe, ID:', recipe.id);
                     
-                    const detailResponse = await fetch(`/api/recipe/${recipe.id}`);
+                    // Debug API call
+                    const detailedRecipe = await debugRecipeAPI(recipe.id);
                     
-                    console.log('API Response status:', detailResponse.status);
-                    console.log('API Response headers:', detailResponse.headers);
-                    
-                    if (detailResponse.ok) {
-                        const detailedRecipe = await detailResponse.json();
-                        console.log('=== DETAILED RECIPE DATA ===');
-                        console.log('Full recipe object:', detailedRecipe);
-                        console.log('Recipe ingredients:', detailedRecipe.recipeIngredients);
-                        console.log('Number of ingredients:', detailedRecipe.recipeIngredients?.length || 0);
-                        
-                        if (detailedRecipe.recipeIngredients && detailedRecipe.recipeIngredients.length > 0) {
-                            console.log('=== INGREDIENTS DETAILS ===');
-                            detailedRecipe.recipeIngredients.forEach((ri, index) => {
-                                console.log(`Ingredient ${index + 1}:`, {
-                                    id: ri.id,
-                                    recipeId: ri.recipeId,
-                                    ingredientId: ri.ingredientId,
-                                    amount: ri.amount,
-                                    ingredient: ri.ingredient,
-                                    ingredientName: ri.ingredient?.name
-                                });
-                            });
-                        } else {
-                            console.warn('No ingredients found in detailed recipe!');
-                        }
-                        
+                    if (detailedRecipe) {
                         showRecipeViewModal(meal.recipeName, detailedRecipe, meal.gramature);
                     } else {
-                        const errorText = await detailResponse.text();
-                        console.error('Failed to get detailed recipe');
-                        console.error('Response status:', detailResponse.status);
-                        console.error('Response text:', errorText);
+                        console.log('Falling back to basic recipe data');
                         showRecipeViewModal(meal.recipeName, recipe, meal.gramature);
                     }
                 } else {
-                    console.warn('Recipe not found for meal:', meal.recipeName);
-                    showRecipeViewModal(meal.recipeName, null);
+                    console.error('Recipe not found:', meal.recipeName);
+                    showRecipeViewModal(meal.recipeName, null, meal.gramature);
                 }
             } catch (error) {
-                console.error('Error viewing recipe:', error);
-                alert('Błąd podczas ładowania przepisu');
+                console.error('Error in viewRecipe:', error);
+                alert('Błąd podczas ładowania przepisu: ' + error.message);
+            }
+        }
+         function createIngredientsProportionsVisualization(ingredients, totalMass) {
+            console.log('=== CREATING PROPORTIONS VISUALIZATION ===');
+            console.log('Ingredients:', ingredients);
+            console.log('Total mass:', totalMass);
+            
+            if (!ingredients || ingredients.length === 0 || totalMass === 0) {
+                return '<div class="no-proportions">Brak danych do wizualizacji proporcji</div>';
+            }
+
+            // Kolory dla składników
+            const colors = [
+                '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', 
+                '#DDA0DD', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E9',
+                '#F8C471', '#82E0AA', '#F1948A', '#85C1E9', '#D7BDE2'
+            ];
+
+            let proportionHtml = '<div class="ingredients-proportions">';
+            proportionHtml += '<h5 style="margin-bottom: 15px; color: #333; font-weight: 600;">📊 Proporcje składników:</h5>';
+            
+            // Pasek proporcji
+            proportionHtml += '<div class="proportion-bar">';
+            
+            ingredients.forEach((ingredient, index) => {
+                const proportion = (ingredient.amount / totalMass) * 100;
+                const color = colors[index % colors.length];
+                
+                proportionHtml += `
+                    <div class="proportion-segment" 
+                         style="width: ${proportion}%; background-color: ${color};"
+                         title="${ingredient.name}: ${proportion.toFixed(1)}%">
+                    </div>
+                `;
+            });
+            
+            proportionHtml += '</div>';
+            
+            // Legenda
+            proportionHtml += '<div class="proportion-legend">';
+            ingredients.forEach((ingredient, index) => {
+                const proportion = (ingredient.amount / totalMass) * 100;
+                const color = colors[index % colors.length];
+                
+                proportionHtml += `
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: ${color};"></div>
+                        <span class="legend-text">${ingredient.name} (${proportion.toFixed(1)}%)</span>
+                    </div>
+                `;
+            });
+            proportionHtml += '</div>';
+            
+            proportionHtml += '</div>';
+            
+            console.log('Generated proportions HTML');
+            return proportionHtml;
+        }
+
+        function calculateIngredientNutrition(recipeIngredients, totalMass, targetGramature) {
+            console.log('=== CALCULATING INGREDIENT NUTRITION ===');
+            console.log('Recipe ingredients:', recipeIngredients);
+            console.log('Total mass:', totalMass, 'Target gramature:', targetGramature);
+            
+            if (!recipeIngredients || recipeIngredients.length === 0 || totalMass === 0) {
+                return [];
+            }
+
+            return recipeIngredients.map(ri => {
+                const baseAmount = ri.amount || 0;
+                const proportion = baseAmount / totalMass;
+                const scaledAmount = proportion * targetGramature;
+                
+                const nutritionData = {
+                    id: ri.ingredientId,
+                    name: ri.ingredient?.name || 'Nieznany składnik',
+                    baseAmount: baseAmount,
+                    proportion: proportion,
+                    scaledAmount: scaledAmount,
+                    formattedAmount: formatUnit(scaledAmount),
+                    percentageText: `${(proportion * 100).toFixed(1)}%`,
+                    // Dodaj wartości odżywcze składnika jeśli dostępne
+                    calories: ri.ingredient?.calories || 0,
+                    protein: ri.ingredient?.protein || 0,
+                    carbs: ri.ingredient?.carbs || 0,
+                    fat: ri.ingredient?.fat || 0
+                };
+                
+                console.log(`Ingredient: ${nutritionData.name}`, {
+                    base: baseAmount + 'g',
+                    proportion: (proportion * 100).toFixed(1) + '%',
+                    scaled: scaledAmount.toFixed(1) + 'g',
+                    formatted: nutritionData.formattedAmount
+                });
+                
+                return nutritionData;
+            });
+        }
+
+        function formatUnit(amount) {
+            if (amount === 0) {
+                return '0g';
+            } else if (amount < 1) {
+                return `${(amount * 1000).toFixed(0)}mg`;
+            } else if (amount < 10) {
+                return `${amount.toFixed(1)}g`;
+            } else {
+                return `${amount.toFixed(0)}g`;
+            }
+        }
+
+        function debugIngredients(recipe, gramature) {
+            console.log('=== INGREDIENTS DEBUG ===');
+            console.log('Recipe name:', recipe.name);
+            console.log('Target gramature:', gramature + 'g');
+            console.log('Recipe ingredients count:', recipe.recipeIngredients?.length || 0);
+            
+            if (recipe.recipeIngredients && recipe.recipeIngredients.length > 0) {
+                console.log('=== INGREDIENTS BREAKDOWN ===');
+                
+                let totalMass = 0;
+                recipe.recipeIngredients.forEach((ri, index) => {
+                    const amount = ri.amount || 0;
+                    totalMass += amount;
+                    
+                    console.log(`${index + 1}. ${ri.ingredient?.name || 'Unknown'}:`, {
+                        id: ri.ingredientId,
+                        amount: amount + 'g',
+                        ingredient: ri.ingredient
+                    });
+                });
+                
+                console.log('Total recipe mass:', totalMass + 'g');
+                console.log('Scaling factor:', (gramature / totalMass).toFixed(3));
+                
+                if (totalMass > 0) {
+                    console.log('=== SCALED AMOUNTS ===');
+                    recipe.recipeIngredients.forEach((ri, index) => {
+                        const baseAmount = ri.amount || 0;
+                        const proportion = baseAmount / totalMass;
+                        const scaledAmount = proportion * gramature;
+                        
+                        console.log(`${index + 1}. ${ri.ingredient?.name}:`, {
+                            original: baseAmount + 'g',
+                            proportion: (proportion * 100).toFixed(1) + '%',
+                            scaled: scaledAmount.toFixed(1) + 'g',
+                            formatted: formatUnit(scaledAmount)
+                        });
+                    });
+                }
+            } else {
+                console.warn('No ingredients found in recipe!');
             }
         }
 
@@ -3181,11 +3545,67 @@
                     </div>
                 `;
             } else {
+                // Debug ingredients
+                debugIngredients(recipe, gramature);
+                
                 const multiplier = gramature ? gramature / 100 : 1;
                 const hasRating = recipe.averageRating && recipe.averageRating > 0;
                 const starsCount = Math.round(recipe.averageRating || 0);
                 const fullStars = '★'.repeat(Math.min(starsCount, 5));
                 const emptyStars = '☆'.repeat(Math.max(0, 5 - starsCount));
+                
+                // Calculate ingredients data
+                let ingredientsHtml = '';
+                let proportionsVisualization = '';
+                
+                if (recipe.recipeIngredients && recipe.recipeIngredients.length > 0) {
+                    const totalMass = recipe.recipeIngredients.reduce((sum, ri) => sum + (ri.amount || 0), 0);
+                    console.log('Total mass calculated:', totalMass);
+                    
+                    if (totalMass > 0) {
+                        const ingredientsData = calculateIngredientNutrition(recipe.recipeIngredients, totalMass, gramature);
+                        proportionsVisualization = createIngredientsProportionsVisualization(recipe.recipeIngredients, totalMass);
+                        
+                        ingredientsHtml = `
+                            <div class="recipe-view-ingredients">
+                                <h4 class="ingredients-title">🥕 Składniki na ${gramature}g</h4>
+                                
+                                ${proportionsVisualization}
+                                
+                                <div class="ingredients-list">
+                                    ${ingredientsData.map(ingredient => `
+                                        <div class="ingredient-item">
+                                            <span class="ingredient-name">
+                                                ${ingredient.name}
+                                                <small class="ingredient-percentage">(${ingredient.percentageText})</small>
+                                            </span>
+                                            <span class="ingredient-amount">${ingredient.formattedAmount}</span>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                                
+                                <div class="ingredients-note">
+                                    💡 Składniki przeliczone proporcjonalnie dla porcji <strong>${gramature}g</strong>
+                                    <br><small>Przepis bazowy: ${totalMass}g składników</small>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        ingredientsHtml = `
+                            <div class="recipe-view-ingredients">
+                                <h4 class="ingredients-title">🥕 Składniki</h4>
+                                <div class="no-instructions">Brak informacji o ilościach składników</div>
+                            </div>
+                        `;
+                    }
+                } else {
+                    ingredientsHtml = `
+                        <div class="recipe-view-ingredients">
+                            <h4 class="ingredients-title">🥕 Składniki</h4>
+                            <div class="no-instructions">Brak informacji o składnikach tego przepisu</div>
+                        </div>
+                    `;
+                }
                 
                 content.innerHTML = `
                     <div class="recipe-view-container">
@@ -3231,73 +3651,7 @@
                         </div>
                         <div class="nutrition-note">Wartości przeliczone na porcję <strong>${gramature}g</strong> (bazowo: 100g)</div>
 
-                        ${recipe.recipeIngredients && recipe.recipeIngredients.length > 0 ? `
-                            <div class="recipe-view-ingredients">
-                                <h4 class="ingredients-title">🥕 Składniki na ${gramature}g</h4>
-                                <div class="ingredients-list">
-                                    ${(() => {
-                                        // Oblicz całkowitą masę wszystkich składników
-                                        const totalMass = recipe.recipeIngredients.reduce((sum, ri) => {
-                                            return sum + (ri.amount || 0);
-                                        }, 0);
-                                        
-                                        console.log('Total mass of all ingredients:', totalMass);
-                                        console.log('Target portion:', gramature);
-                                        
-                                        if (totalMass === 0) {
-                                            return '<div class="no-instructions">Brak informacji o ilościach składników</div>';
-                                        }
-                                        
-                                        return recipe.recipeIngredients.map(ri => {
-                                            console.log('Processing ingredient:', ri);
-                                            const baseAmount = ri.amount || 0;
-                                            
-                                            // Oblicz proporcję tego składnika w całości
-                                            const proportion = baseAmount / totalMass;
-                                            
-                                            // Oblicz ilość dla docelowej porcji
-                                            const scaledAmount = proportion * gramature;
-                                            
-                                            console.log(`Ingredient: ${ri.ingredient?.name}, Base: ${baseAmount}g, Proportion: ${(proportion * 100).toFixed(1)}%, Scaled: ${scaledAmount.toFixed(1)}g`);
-                                            
-                                            // Formatowanie ilości w zależności od wielkości
-                                            let formattedAmount;
-                                            if (scaledAmount === 0) {
-                                                formattedAmount = '0g';
-                                            } else if (scaledAmount < 1) {
-                                                formattedAmount = `${(scaledAmount * 1000).toFixed(0)}mg`;
-                                            } else if (scaledAmount < 10) {
-                                                formattedAmount = `${scaledAmount.toFixed(1)}g`;
-                                            } else {
-                                                formattedAmount = `${scaledAmount.toFixed(0)}g`;
-                                            }
-                                            
-                                            return `
-                                                <div class="ingredient-item">
-                                                    <span class="ingredient-name">
-                                                        ${ri.ingredient?.name || 'Nieznany składnik'}
-                                                        <small style="color: #888; font-size: 0.8rem;">(${(proportion * 100).toFixed(1)}%)</small>
-                                                    </span>
-                                                    <span class="ingredient-amount">${formattedAmount}</span>
-                                                </div>
-                                            `;
-                                        }).join('');
-                                    })()}
-                                </div>
-                                <div class="ingredients-note">
-                                    💡 Składniki przeliczone proporcjonalnie dla porcji <strong>${gramature}g</strong>
-                                    <br><small>Przepis bazowy: ${(() => {
-                                        const totalMass = recipe.recipeIngredients.reduce((sum, ri) => sum + (ri.amount || 0), 0);
-                                        return totalMass > 0 ? `${totalMass}g` : '?g';
-                                    })()} składników</small>
-                                </div>
-                            </div>
-                        ` : `
-                            <div class="recipe-view-ingredients">
-                                <h4 class="ingredients-title">🥕 Składniki</h4>
-                                <div class="no-instructions">Brak informacji o składnikach tego przepisu</div>
-                            </div>
-                        `}
+                        ${ingredientsHtml}
 
                         <div class="recipe-view-instructions">
                             <h4 class="instructions-title">📋 Instrukcje przygotowania</h4>
@@ -3537,7 +3891,70 @@
             document.getElementById('carbsProgress').textContent = `${Math.round(totalCarbs)} / ${userNutrition.carbs}g`;
             document.getElementById('fatProgress').textContent = `${Math.round(totalFat)} / ${userNutrition.fat}g`;
         }
+        async function checkExistingRating(recipeId) {
+            try {
+                const response = await fetch(`/api/recipe/${recipeId}/rating`);
+                if (response.ok) {
+                    const ratingData = await response.json();
+                    
+                    if (ratingData.userRating) {
+                        // User already rated this recipe
+                        const ratingForm = document.getElementById(`ratingForm-${recipeId}`);
+                        if (ratingForm) {
+                            const stars = '★'.repeat(ratingData.userRating) + '☆'.repeat(5 - ratingData.userRating);
+                            
+                            ratingForm.innerHTML = `
+                                <div class="existing-rating">
+                                    <div class="existing-rating-title">Twoja ocena tego przepisu:</div>
+                                    <div class="existing-rating-stars">${stars}</div>
+                                    ${ratingData.userComment ? `
+                                        <div class="existing-rating-comment">
+                                            "${ratingData.userComment}"
+                                        </div>
+                                    ` : ''}
+                                    <div class="existing-rating-date">
+                                        Średnia: ${ratingData.averageRating}/5 (${ratingData.ratingCount} ocen)
+                                    </div>
+                                </div>
+                            `;
+                        }
+                    }
+                } else {
+                    console.log('No existing rating found or error fetching rating');
+                }
+            } catch (error) {
+                console.error('Error checking existing rating:', error);
+            }
+        }
 
+        function showRatingPrompt(meal, dateStr, mealId) {
+            console.log('Showing rating prompt for meal:', meal.recipeName);
+            
+            document.getElementById('ratingPromptRecipeName').textContent = meal.recipeName;
+            document.getElementById('ratingPromptSubtitle').textContent = `Porcja: ${meal.gramature}g`;
+            
+            // Store data for later use
+            window.currentRatingMeal = meal;
+            window.currentRatingDateStr = dateStr;
+            window.currentRatingMealId = mealId;
+            
+            document.getElementById('ratingPromptModal').classList.add('show');
+        }
+
+        function closeRatingPrompt() {
+            document.getElementById('ratingPromptModal').classList.remove('show');
+            window.currentRatingMeal = null;
+            window.currentRatingDateStr = null;
+            window.currentRatingMealId = null;
+        }
+
+        function openRatingFromPrompt() {
+            if (window.currentRatingMeal) {
+                closeRatingPrompt();
+                // Open the recipe view modal in rating mode
+                viewRecipe(window.currentRatingDateStr, window.currentRatingMealId);
+            }
+        }
         // Close modal when clicking outside
         document.getElementById('mealModal').addEventListener('click', function(e) {
             if (e.target === this) {

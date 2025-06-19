@@ -119,6 +119,7 @@ namespace KontrolaNawykow.Controllers
 
                 Console.WriteLine($"RecipeDto object: Name={recipeDto?.Name}, Calories={recipeDto?.Calories}, Protein={recipeDto?.Protein}");
                 Console.WriteLine($"Image parameter: {image?.FileName} ({image?.Length} bytes)");
+                Console.WriteLine($"RecipeIngredients JSON: {recipeDto?.RecipeIngredients}");
 
                 var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
                 if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
@@ -229,90 +230,127 @@ namespace KontrolaNawykow.Controllers
                         Console.WriteLine("No image provided");
                     }
 
-                    // Dodaj przepis do bazy
+                    // Dodaj przepis do bazy NAJPIERW
                     _context.Recipes.Add(recipe);
                     await _context.SaveChangesAsync();
 
                     Console.WriteLine($"Recipe saved with ID: {recipe.Id}");
 
-                    // Przetwórz składniki
+                    // POPRAWIONE PRZETWARZANIE SKŁADNIKÓW
                     if (!string.IsNullOrEmpty(recipeDto.RecipeIngredients))
                     {
-                        Console.WriteLine($"Processing ingredients JSON: {recipeDto.RecipeIngredients}");
+                        Console.WriteLine($"=== PROCESSING INGREDIENTS ===");
+                        Console.WriteLine($"Raw JSON: {recipeDto.RecipeIngredients}");
 
                         try
                         {
+                            // Spróbuj deserializować JSON
                             var ingredientsData = JsonSerializer.Deserialize<List<RecipeIngredientDto>>(recipeDto.RecipeIngredients);
-                            Console.WriteLine($"Parsed {ingredientsData?.Count ?? 0} ingredients");
+                            Console.WriteLine($"Successfully parsed {ingredientsData?.Count ?? 0} ingredients from JSON");
 
                             if (ingredientsData != null && ingredientsData.Count > 0)
                             {
-                                // Filtruj nieprawidłowe składniki
+                                Console.WriteLine("=== RAW INGREDIENTS DATA ===");
+                                foreach (var ing in ingredientsData)
+                                {
+                                    Console.WriteLine($"Raw ingredient: ID={ing.IngredientId}, Amount={ing.Amount}");
+                                }
+
+                                // Filtruj składniki - ZMIENIAMY WARUNKI
                                 var validIngredients = ingredientsData
                                     .Where(ing => ing.IngredientId > 0 && ing.Amount > 0)
                                     .ToList();
 
-                                Console.WriteLine($"Valid ingredients: {validIngredients.Count}");
+                                Console.WriteLine($"=== VALID INGREDIENTS ===");
+                                Console.WriteLine($"Valid ingredients count: {validIngredients.Count}");
 
-                                foreach (var ingredient in validIngredients)
+                                if (validIngredients.Count == 0)
                                 {
-                                    Console.WriteLine($"Processing ingredient: ID={ingredient.IngredientId}, Amount={ingredient.Amount}");
+                                    Console.WriteLine("WARNING: No valid ingredients found, but continuing...");
+                                    // NIE PRZERYWAMY - pozwalamy na przepis bez składników
+                                }
+                                else
+                                {
+                                    Console.WriteLine("=== SAVING INGREDIENTS ===");
 
-                                    // Sprawdź czy składnik istnieje w bazie
-                                    var ingredientExists = await _context.Ingredients
-                                        .AnyAsync(i => i.Id == ingredient.IngredientId);
-
-                                    if (!ingredientExists)
+                                    foreach (var ingredient in validIngredients)
                                     {
-                                        Console.WriteLine($"Ingredient with ID {ingredient.IngredientId} does not exist");
-                                        await transaction.RollbackAsync();
-                                        return BadRequest($"Składnik o ID {ingredient.IngredientId} nie istnieje w bazie danych.");
+                                        Console.WriteLine($"Processing ingredient: ID={ingredient.IngredientId}, Amount={ingredient.Amount}");
+
+                                        // Sprawdź czy składnik istnieje w bazie
+                                        var ingredientExists = await _context.Ingredients
+                                            .AnyAsync(i => i.Id == ingredient.IngredientId);
+
+                                        if (!ingredientExists)
+                                        {
+                                            Console.WriteLine($"ERROR: Ingredient with ID {ingredient.IngredientId} does not exist in database");
+                                            await transaction.RollbackAsync();
+                                            return BadRequest($"Składnik o ID {ingredient.IngredientId} nie istnieje w bazie danych.");
+                                        }
+
+                                        // Utwórz RecipeIngredient
+                                        var recipeIngredient = new RecipeIngredient
+                                        {
+                                            RecipeId = recipe.Id,
+                                            IngredientId = ingredient.IngredientId,
+                                            Amount = ingredient.Amount
+                                        };
+
+                                        _context.RecipeIngredients.Add(recipeIngredient);
+                                        Console.WriteLine($"Added RecipeIngredient: RecipeId={recipe.Id}, IngredientId={ingredient.IngredientId}, Amount={ingredient.Amount}");
                                     }
 
-                                    var recipeIngredient = new RecipeIngredient
-                                    {
-                                        RecipeId = recipe.Id,
-                                        IngredientId = ingredient.IngredientId,
-                                        Amount = ingredient.Amount
-                                    };
-
-                                    _context.RecipeIngredients.Add(recipeIngredient);
-                                    Console.WriteLine($"Added ingredient: ID={ingredient.IngredientId}, Amount={ingredient.Amount}");
+                                    // Zapisz składniki
+                                    var savedIngredientsCount = await _context.SaveChangesAsync();
+                                    Console.WriteLine($"Saved {savedIngredientsCount} ingredient records to database");
                                 }
-
-                                await _context.SaveChangesAsync();
-                                Console.WriteLine("All ingredients saved successfully");
+                            }
+                            else
+                            {
+                                Console.WriteLine("No ingredients data in JSON or JSON is empty");
                             }
                         }
                         catch (JsonException ex)
                         {
                             Console.WriteLine($"JSON parsing error: {ex.Message}");
+                            Console.WriteLine($"JSON content that failed: {recipeDto.RecipeIngredients}");
                             await transaction.RollbackAsync();
-                            return BadRequest("Błąd podczas przetwarzania składników. Sprawdź format danych.");
+                            return BadRequest($"Błąd podczas przetwarzania składników JSON: {ex.Message}");
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"Unexpected error processing ingredients: {ex.Message}");
+                            Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                            await transaction.RollbackAsync();
+                            return BadRequest($"Błąd podczas przetwarzania składników: {ex.Message}");
                         }
                     }
                     else
                     {
-                        Console.WriteLine("No ingredients JSON provided");
+                        Console.WriteLine("No ingredients JSON provided - recipe will be saved without ingredients");
                     }
 
                     // Zatwierdź transakcję
                     await transaction.CommitAsync();
-                    Console.WriteLine("Transaction committed successfully");
+                    Console.WriteLine("=== TRANSACTION COMMITTED SUCCESSFULLY ===");
 
-                    // Załaduj przepis z relacjami
+                    // Załaduj przepis z relacjami dla odpowiedzi
                     var savedRecipe = await _context.Recipes
                         .Include(r => r.RecipeIngredients)
                         .ThenInclude(ri => ri.Ingredient)
                         .FirstOrDefaultAsync(r => r.Id == recipe.Id);
 
-                    Console.WriteLine("=== PostRecipe completed successfully ===");
+                    Console.WriteLine($"=== RECIPE CREATED SUCCESSFULLY ===");
+                    Console.WriteLine($"Recipe ID: {savedRecipe.Id}");
+                    Console.WriteLine($"Recipe Name: {savedRecipe.Name}");
+                    Console.WriteLine($"Recipe Ingredients Count: {savedRecipe.RecipeIngredients?.Count ?? 0}");
 
                     return CreatedAtAction(nameof(GetRecipe), new { id = recipe.Id }, savedRecipe);
                 }
                 catch (Exception innerEx)
                 {
-                    Console.WriteLine($"Error in transaction: {innerEx.Message}");
+                    Console.WriteLine($"=== TRANSACTION ERROR ===");
+                    Console.WriteLine($"Error: {innerEx.Message}");
                     Console.WriteLine($"Stack trace: {innerEx.StackTrace}");
                     await transaction.RollbackAsync();
                     throw;
@@ -320,6 +358,7 @@ namespace KontrolaNawykow.Controllers
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"=== GENERAL ERROR ===");
                 Console.WriteLine($"Error in PostRecipe: {ex.Message}");
                 Console.WriteLine($"Stack trace: {ex.StackTrace}");
                 return StatusCode(500, $"Błąd podczas dodawania przepisu: {ex.Message}");

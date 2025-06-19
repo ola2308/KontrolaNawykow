@@ -1637,154 +1637,170 @@
         }
 
         async function submitRecipe() {
-            console.log('=== SUBMITTING RECIPE ===');
+    console.log('=== SUBMITTING RECIPE ===');
 
-            // Show loading state
-            const submitBtn = document.querySelector('.submit-btn');
-            const originalText = submitBtn.innerHTML;
-            submitBtn.innerHTML = '<span class="spinner"></span> Zapisywanie...';
-            submitBtn.disabled = true;
+    // Show loading state
+    const submitBtn = document.querySelector('.submit-btn');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<span class="spinner"></span> Zapisywanie...';
+    submitBtn.disabled = true;
 
-            try {
-                // Basic validation - używaj ID zamiast name
-                const nameElement = document.getElementById('recipeName');
-                const caloriesElement = document.getElementById('calories');
-                const proteinElement = document.getElementById('protein');
-                const carbsElement = document.getElementById('carbs');
-                const fatElement = document.getElementById('fat');
+    try {
+        // Basic validation
+        const nameElement = document.getElementById('recipeName');
+        const caloriesElement = document.getElementById('calories');
+        const proteinElement = document.getElementById('protein');
+        const carbsElement = document.getElementById('carbs');
+        const fatElement = document.getElementById('fat');
 
-                // Sprawdź czy wszystkie wymagane elementy istnieją
-                if (!nameElement || !caloriesElement || !proteinElement || !carbsElement || !fatElement) {
-                    throw new Error('Nie można znaleźć wszystkich wymaganych pól formularza');
-                }
+        if (!nameElement || !caloriesElement || !proteinElement || !carbsElement || !fatElement) {
+            throw new Error('Nie można znaleźć wszystkich wymaganych pól formularza');
+        }
 
-                const name = nameElement.value.trim();
-                const calories = caloriesElement.value;
-                const protein = proteinElement.value;
-                const carbs = carbsElement.value;
-                const fat = fatElement.value;
+        const name = nameElement.value.trim();
+        const calories = caloriesElement.value;
+        const protein = proteinElement.value;
+        const carbs = carbsElement.value;
+        const fat = fatElement.value;
 
-                console.log('Form data:', { name, calories, protein, carbs, fat });
+        console.log('Form data:', { name, calories, protein, carbs, fat });
 
-                if (!name) {
-                    throw new Error('Nazwa przepisu jest wymagana');
-                }
+        if (!name) {
+            throw new Error('Nazwa przepisu jest wymagana');
+        }
 
-                if (!calories || !protein || !carbs || !fat) {
-                    throw new Error('Wszystkie wartości odżywcze są wymagane');
-                }
+        if (!calories || !protein || !carbs || !fat) {
+            throw new Error('Wszystkie wartości odżywcze są wymagane');
+        }
 
-                if (selectedIngredients.length === 0) {
-                    if (!confirm('Nie dodano żadnych składników. Czy chcesz kontynuować bez składników?')) {
-                        return;
-                    }
-                }
+        // POPRAWIONA WALIDACJA SKŁADNIKÓW
+        console.log('=== INGREDIENTS VALIDATION ===');
+        console.log('Selected ingredients:', selectedIngredients);
+        console.log('Selected ingredients count:', selectedIngredients.length);
 
-                // Prepare form data z poprawnymi nazwami dla RecipeDto
-                // Serwer oczekuje przecinków (polskie ustawienia)
-                const formData = new FormData();
-                formData.append('Name', name);
-                formData.append('Calories', calories);
-                formData.append('Protein', protein.replace('.', ','));
-                formData.append('Carbs', carbs.replace('.', ','));
-                formData.append('Fat', fat.replace('.', ','));
-                formData.append('Instructions', document.getElementById('instructions').value || '');
-                formData.append('IsPublic', document.getElementById('isPublicCheckbox').checked);
+        if (selectedIngredients.length === 0) {
+            if (!confirm('Nie dodano żadnych składników. Czy chcesz kontynuować bez składników?')) {
+                return;
+            }
+            console.log('User confirmed to continue without ingredients');
+        }
 
-                // Add image if selected
-                const imageFile = document.getElementById('recipeImage').files[0];
-                if (imageFile) {
-                    console.log('Adding image:', imageFile.name, imageFile.size);
-                    formData.append('image', imageFile);  // parametr metody kontrolera
-                }
+        // Prepare form data z poprawnymi nazwami
+        const formData = new FormData();
+        formData.append('Name', name);
+        formData.append('Calories', calories);
+        formData.append('Protein', protein.replace('.', ','));
+        formData.append('Carbs', carbs.replace('.', ','));
+        formData.append('Fat', fat.replace('.', ','));
+        formData.append('Instructions', document.getElementById('instructions').value || '');
+        formData.append('IsPublic', document.getElementById('isPublicCheckbox').checked);
 
-                // Add ingredients JSON
-                const ingredientsData = selectedIngredients.map(ingredient => ({
-                    IngredientId: ingredient.id,
-                    Amount: parseFloat(ingredient.amount) || 100
-                }));
+        // Add image if selected
+        const imageFile = document.getElementById('recipeImage').files[0];
+        if (imageFile) {
+            console.log('Adding image:', imageFile.name, imageFile.size);
+            formData.append('image', imageFile);
+        }
 
-                console.log('Ingredients to save:', ingredientsData);
-                formData.append('RecipeIngredients', JSON.stringify(ingredientsData));
+        // POPRAWIONE TWORZENIE JSON SKŁADNIKÓW
+        console.log('=== CREATING INGREDIENTS JSON ===');
+        
+        const ingredientsData = selectedIngredients.map(ingredient => {
+            const ingredientDto = {
+                IngredientId: parseInt(ingredient.id), // Upewnij się, że to liczba
+                Amount: parseFloat(ingredient.amount) || 100 // Upewnij się, że to liczba
+            };
+            console.log('Created ingredient DTO:', ingredientDto);
+            return ingredientDto;
+        });
 
-                // Debug FormData
-                console.log('FormData contents:');
-                for (let [key, value] of formData.entries()) {
-                    console.log(key, ':', value);
-                }
+        console.log('Final ingredients data array:', ingredientsData);
 
-                showAlert('Zapisywanie przepisu do bazy danych...', 'info');
+        // Konwertuj na JSON
+        const ingredientsJSON = JSON.stringify(ingredientsData);
+        console.log('Ingredients JSON string:', ingredientsJSON);
 
-                const response = await fetch('/api/recipe', {
-                    method: 'POST',
-                    body: formData,
-                    credentials: 'include'
-                });
+        formData.append('RecipeIngredients', ingredientsJSON);
 
-                console.log('Response status:', response.status);
-
-                if (response.ok) {
-                    const newRecipe = await response.json();
-                    console.log('Recipe created successfully:', newRecipe);
-
-                    // Immediate redirect with success message
-                    showAlert('✅ Przepis został dodany pomyślnie!', 'success');
-                    
-                    // Wait a short moment for user to see the success message, then redirect
-                    setTimeout(() => {
-                        console.log('Redirecting to /Diet/Index...');
-                        // Use replace() to prevent going back to the form
-                        window.location.replace('/Diet/Index');
-                    }, 1500);
-
-                } else {
-                    // Obsługa błędów walidacji
-                    const contentType = response.headers.get('content-type');
-                    let errorMessage = `Błąd serwera (${response.status})`;
-
-                    if (contentType && contentType.includes('application/json')) {
-                        try {
-                            const errorData = await response.json();
-                            console.error('Error response JSON:', errorData);
-
-                            // Jeśli to błąd walidacji z ModelState
-                            if (errorData.errors) {
-                                const errorMessages = [];
-                                for (const [field, messages] of Object.entries(errorData.errors)) {
-                                    errorMessages.push(`${field}: ${messages.join(', ')}`);
-                                }
-                                errorMessage = `Błędy walidacji: ${errorMessages.join('; ')}`;
-                            } else if (errorData.title) {
-                                errorMessage = errorData.title;
-                            } else if (errorData.message) {
-                                errorMessage = errorData.message;
-                            }
-                        } catch (parseError) {
-                            console.error('Error parsing JSON response:', parseError);
-                        }
-                    } else {
-                        try {
-                            const errorText = await response.text();
-                            console.error('Error response text:', errorText);
-                            if (errorText) {
-                                errorMessage = errorText;
-                            }
-                        } catch (textError) {
-                            console.error('Error reading response text:', textError);
-                        }
-                    }
-
-                    throw new Error(errorMessage);
-                }
-            } catch (error) {
-                console.error('Error submitting recipe:', error);
-                showAlert(`❌ Błąd podczas zapisywania przepisu: ${error.message}`, 'danger');
-            } finally {
-                // Restore button state
-                submitBtn.innerHTML = originalText;
-                submitBtn.disabled = false;
+        // Debug całej FormData
+        console.log('=== FINAL FORM DATA ===');
+        for (let [key, value] of formData.entries()) {
+            if (key === 'image') {
+                console.log(key, ':', `[File: ${value.name}, Size: ${value.size}]`);
+            } else {
+                console.log(key, ':', value);
             }
         }
+
+        showAlert('Zapisywanie przepisu do bazy danych...', 'info');
+
+        // Wyślij request
+        const response = await fetch('/api/recipe', {
+            method: 'POST',
+            body: formData,
+            credentials: 'include'
+        });
+
+        console.log('Response status:', response.status);
+        console.log('Response headers:', response.headers);
+
+        if (response.ok) {
+            const newRecipe = await response.json();
+            console.log('Recipe created successfully:', newRecipe);
+            console.log('Recipe ingredients in response:', newRecipe.recipeIngredients);
+
+            showAlert('✅ Przepis został dodany pomyślnie!', 'success');
+            
+            setTimeout(() => {
+                console.log('Redirecting to /Diet/Index...');
+                window.location.replace('/Diet/Index');
+            }, 1500);
+
+        } else {
+            // Improved error handling
+            const contentType = response.headers.get('content-type');
+            let errorMessage = `Błąd serwera (${response.status})`;
+
+            try {
+                if (contentType && contentType.includes('application/json')) {
+                    const errorData = await response.json();
+                    console.error('Error response JSON:', errorData);
+
+                    if (errorData.errors) {
+                        const errorMessages = [];
+                        for (const [field, messages] of Object.entries(errorData.errors)) {
+                            errorMessages.push(`${field}: ${messages.join(', ')}`);
+                        }
+                        errorMessage = `Błędy walidacji: ${errorMessages.join('; ')}`;
+                    } else if (errorData.title) {
+                        errorMessage = errorData.title;
+                    } else if (errorData.message) {
+                        errorMessage = errorData.message;
+                    }
+                } else {
+                    const errorText = await response.text();
+                    console.error('Error response text:', errorText);
+                    if (errorText) {
+                        errorMessage = errorText;
+                    }
+                }
+            } catch (parseError) {
+                console.error('Error parsing response:', parseError);
+            }
+
+            throw new Error(errorMessage);
+        }
+    } catch (error) {
+        console.error('=== SUBMIT ERROR ===');
+        console.error('Error submitting recipe:', error);
+        console.error('Error stack:', error.stack);
+        showAlert(`❌ Błąd podczas zapisywania przepisu: ${error.message}`, 'danger');
+    } finally {
+        // Restore button state
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    }
+}
 
         function showAlert(message, type) {
             const alertsContainer = document.getElementById('alertsContainer');
