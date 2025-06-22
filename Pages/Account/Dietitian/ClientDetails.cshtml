@@ -1,0 +1,25 @@
+﻿@page
+@model KontrolaNawykow.Pages.Account.Dietitian.ClientDetailsModel
+@{
+    Layout = "_Layout";
+}
+<h1>Podopieczny: @Model.Client.Username</h1>
+
+<p>Email: @Model.Client.Email</p>
+<p>Waga: @Model.Client.Waga</p>
+<p>Wzrost: @Model.Client.Wzrost</p>
+<p>Cel: @Model.Client.Cel</p>
+
+<form method="post">
+    <label>
+        <input type="radio" asp-for="DieticianAccepted" value="1"
+               @(Model.DieticianAccepted == 1 ? "checked" : "") />
+        Zaakceptowany
+    </label>
+    <label>
+        <input type="radio" asp-for="DieticianAccepted" value="0"
+               @(Model.DieticianAccepted == 0 ? "checked" : "") />
+        Oczekujący
+    </label>
+    <br /><button type="submit">Zapisz</button>
+</form>

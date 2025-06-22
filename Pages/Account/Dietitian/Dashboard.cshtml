@@ -1,0 +1,42 @@
+﻿@page
+@model KontrolaNawykow.Pages.Account.Dietitian.DashboardModel
+@{
+    Layout = "_Layout";
+}
+<h1>Panel dietetyka</h1>
+
+<h2>Oczekujący na akceptację</h2>
+@if (!Model.PendingClients.Any())
+{
+    <p>Brak nowych zgłoszeń.</p>
+}
+else
+{
+    <ul>
+        @foreach (var u in Model.PendingClients)
+        {
+            <li>
+                @u.Username (@u.Email)
+                <a asp-page="./ClientDetails" asp-route-id="@u.Id">Szczegóły</a>
+            </li>
+        }
+    </ul>
+}
+
+<h2>Aktualni podopieczni</h2>
+@if (!Model.AcceptedClients.Any())
+{
+    <p>Brak podopiecznych.</p>
+}
+else
+{
+    <ul>
+        @foreach (var u in Model.AcceptedClients)
+        {
+            <li>
+                @u.Username (@u.Email)
+                <a asp-page="./ClientDetails" asp-route-id="@u.Id">Edytuj dietę</a>
+            </li>
+        }
+    </ul>
+}
