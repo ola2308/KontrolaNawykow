@@ -1,9 +1,12 @@
-using Microsoft.AspNetCore.Mvc;
+ï»¿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using KontrolaNawykow.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using System.Security.Claims;
 
 namespace KontrolaNawykow.Pages.Account
 {
@@ -18,95 +21,95 @@ namespace KontrolaNawykow.Pages.Account
         }
 
         [BindProperty]
-        [Required(ErrorMessage = "Nazwa u¿ytkownika jest wymagana")]
-        [StringLength(50, ErrorMessage = "Nazwa u¿ytkownika musi mieæ od {2} do {1} znaków.", MinimumLength = 3)]
+        [Required(ErrorMessage = "Nazwa uzytkownika jest wymagana")]
+        [StringLength(50, ErrorMessage = "Nazwa uzytkownika musi miec od {2} do {1} znakow.", MinimumLength = 3)]
         public string Username { get; set; }
 
         [BindProperty]
         [Required(ErrorMessage = "Email jest wymagany")]
-        [EmailAddress(ErrorMessage = "Nieprawid³owy format adresu email")]
+        [EmailAddress(ErrorMessage = "Nieprawidlowy format adresu email")]
         public string Email { get; set; }
 
         [BindProperty]
-        [Required(ErrorMessage = "Has³o jest wymagane")]
-        [StringLength(100, ErrorMessage = "Has³o musi mieæ minimum {2} znaków.", MinimumLength = 6)]
+        [Required(ErrorMessage = "Haslo jest wymagane")]
+        [StringLength(100, ErrorMessage = "Haslo musi miec minimum {2} znakow.", MinimumLength = 6)]
         [DataType(DataType.Password)]
         public string Password { get; set; }
 
         [BindProperty]
-        [Required(ErrorMessage = "Potwierdzenie has³a jest wymagane")]
+        [Required(ErrorMessage = "Potwierdzenie hasla jest wymagane")]
         [DataType(DataType.Password)]
-        [Compare("Password", ErrorMessage = "Has³a nie s¹ identyczne")]
+        [Compare("Password", ErrorMessage = "Hasla nie sÄ… identyczne")]
         public string ConfirmPassword { get; set; }
 
         public string ErrorMessage { get; set; }
 
         public void OnGet()
         {
-            Console.WriteLine("? Otworzono stronê rejestracji.");
+            Console.WriteLine("âœ“ Otworzono strone rejestracji.");
         }
 
         public async Task<IActionResult> OnPostAsync()
         {
             try
             {
-                Console.WriteLine("?? Próba rejestracji - pocz¹tek metody OnPostAsync");
+                Console.WriteLine("=== ROZPOCZECIE REJESTRACJI ===");
 
-                // Rêcznie pobierz wartoœci z formularza
+                // RÄ™cznie pobierz wartoÅ›ci z formularza
                 string username = Request.Form["Username"].ToString();
                 string email = Request.Form["Email"].ToString();
                 string password = Request.Form["Password"].ToString();
                 string confirmPassword = Request.Form["ConfirmPassword"].ToString();
 
-                Console.WriteLine($"?? Rêcznie pobrane wartoœci: Username='{username}', Email='{email}', Password length={password.Length}, ConfirmPassword length={confirmPassword.Length}");
+                Console.WriteLine($"Recznie pobrane wartosci: Username='{username}', Email='{email}', Password length={password.Length}, ConfirmPassword length={confirmPassword.Length}");
 
-                // Przypisz wartoœci do w³aœciwoœci modelu
+                // Przypisz wartoÅ›ci do wÅ‚aÅ›ciwoÅ›ci modelu
                 Username = username;
                 Email = email;
                 Password = password;
                 ConfirmPassword = confirmPassword;
 
-                // Dodany kod do debugowania wartoœci formularza
-                Console.WriteLine("?? WSZYSTKIE DANE FORMULARZA:");
+                // Debugowanie danych formularza
+                Console.WriteLine("=== WSZYSTKIE DANE FORMULARZA ===");
                 foreach (var key in Request.Form.Keys)
                 {
                     if (key.Contains("Password", StringComparison.OrdinalIgnoreCase))
                     {
-                        Console.WriteLine($"   Klucz: {key}, D³ugoœæ: {Request.Form[key].ToString().Length}");
+                        Console.WriteLine($"   Klucz: {key}, Dlugosc: {Request.Form[key].ToString().Length}");
                     }
                     else
                     {
-                        Console.WriteLine($"   Klucz: {key}, Wartoœæ: {Request.Form[key]}");
+                        Console.WriteLine($"   Klucz: {key}, Wartosc: {Request.Form[key]}");
                     }
                 }
 
-                // 2?? Sprawdzenie ModelState
+                // Sprawdzenie ModelState
                 if (!ModelState.IsValid)
                 {
-                    Console.WriteLine("? ModelState jest NIEPOPRAWNY!");
+                    Console.WriteLine("ModelState jest NIEPOPRAWNY!");
                     foreach (var modelError in ModelState.Values.SelectMany(v => v.Errors))
                     {
-                        Console.WriteLine($"? B³¹d walidacji: {modelError.ErrorMessage}");
+                        Console.WriteLine($"Blad walidacji: {modelError.ErrorMessage}");
                     }
                     return Page();
                 }
 
-                // 3?? Sprawdzenie, czy u¿ytkownik istnieje
+                // Sprawdzenie, czy uÅ¼ytkownik istnieje
                 if (await _context.Users.AnyAsync(u => u.Username == Username))
                 {
-                    ErrorMessage = "U¿ytkownik o takiej nazwie ju¿ istnieje.";
-                    Console.WriteLine("? U¿ytkownik o takiej nazwie ju¿ istnieje.");
+                    ErrorMessage = "Uzytkownik o takiej nazwie juÅ¼ istnieje.";
+                    Console.WriteLine("âŒ Uzytkownik o takiej nazwie juÅ¼ istnieje.");
                     return Page();
                 }
 
                 if (await _context.Users.AnyAsync(u => u.Email == Email))
                 {
-                    ErrorMessage = "Ten adres email jest ju¿ u¿ywany.";
-                    Console.WriteLine("? Adres email ju¿ istnieje w bazie.");
+                    ErrorMessage = "Ten adres email jest juÅ¼ uzywany.";
+                    Console.WriteLine("Adres email juÅ¼ istnieje w bazie.");
                     return Page();
                 }
 
-                // Bezpoœrednie utworzenie u¿ytkownika z podstawowymi danymi
+                // Utworzenie nowego uÅ¼ytkownika
                 var user = new User
                 {
                     Username = Username,
@@ -115,29 +118,51 @@ namespace KontrolaNawykow.Pages.Account
                     CreatedAt = DateTime.UtcNow
                 };
 
-                // Dodanie u¿ytkownika do bazy danych
+                // Dodanie uÅ¼ytkownika do bazy danych
                 _context.Users.Add(user);
                 await _context.SaveChangesAsync();
 
-                Console.WriteLine($"? Utworzono u¿ytkownika z ID: {user.Id}");
+                Console.WriteLine($"Utworzono uzytkownika z ID: {user.Id}");
 
-                // Zapisanie ID u¿ytkownika w TempData
+                // AUTOMATYCZNE LOGOWANIE UÅ»YTKOWNIKA PO REJESTRACJI
+                var claims = new List<Claim>
+                {
+                    new Claim(ClaimTypes.Name, user.Username),
+                    new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                    new Claim(ClaimTypes.Email, user.Email)
+                };
+
+                var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+
+                var authProperties = new AuthenticationProperties
+                {
+                    IsPersistent = true,
+                    ExpiresUtc = DateTimeOffset.UtcNow.AddDays(7)
+                };
+
+                await HttpContext.SignInAsync(
+                    CookieAuthenticationDefaults.AuthenticationScheme,
+                    new ClaimsPrincipal(claimsIdentity),
+                    authProperties);
+
+                Console.WriteLine($"Uzytkownik {user.Username} zostal automatycznie zalogowany.");
+
+                // Zapisanie ID uÅ¼ytkownika w TempData jako backup
                 TempData["UserId"] = user.Id;
-
-                Console.WriteLine($"? Dane zapisane w TempData: UserId={TempData["UserId"]}");
-
-                // Upewnienie siê, ¿e TempData zostaje zachowane
                 TempData.Keep("UserId");
 
-                Console.WriteLine("? Przekierowanie do Setup...");
+                Console.WriteLine($"Dane zapisane w TempData: UserId={TempData["UserId"]}");
+                Console.WriteLine("Przekierowanie do Setup...");
+
+                // Przekierowanie do konfiguracji profilu
                 return RedirectToPage("/Profile/Setup");
             }
             catch (Exception ex)
             {
-                // 6?? Obs³uga b³êdów
-                ErrorMessage = "Wyst¹pi³ b³¹d podczas przetwarzania danych: " + ex.Message;
-                Console.WriteLine("? B³¹d: " + ex.Message);
-                Console.WriteLine("? Stack trace: " + ex.StackTrace);
+                // ObsÅ‚uga bÅ‚Ä™dÃ³w
+                ErrorMessage = "Wystapil blad podczas przetwarzania danych: " + ex.Message;
+                Console.WriteLine($"Blad: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
                 return Page();
             }
         }
