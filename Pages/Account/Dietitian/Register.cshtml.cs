@@ -1,9 +1,13 @@
+using System;
+using System.ComponentModel.DataAnnotations;
+using System.IO;
+using System.Threading.Tasks;
+using KontrolaNawykow.Models;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using System.ComponentModel.DataAnnotations;
-using KontrolaNawykow.Models;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Authorization;
 
 namespace KontrolaNawyków.Pages.Account.Dietitian
 {
@@ -13,13 +17,24 @@ namespace KontrolaNawyków.Pages.Account.Dietitian
         private readonly ApplicationDbContext _context;
         public RegisterModel(ApplicationDbContext context) => _context = context;
 
-        [BindProperty, Required(ErrorMessage = "Nazwa u¿ytkownika jest wymagana")]
-        [StringLength(50, MinimumLength = 3, ErrorMessage = "3–50 znaków")]
-        public string Username { get; set; }
+        [BindProperty, Required(ErrorMessage = "Imiê jest wymagane")]
+        public string Imie { get; set; }
+
+        [BindProperty, Required(ErrorMessage = "Nazwisko jest wymagane")]
+        public string Nazwisko { get; set; }
 
         [BindProperty, Required(ErrorMessage = "Email jest wymagany")]
         [EmailAddress(ErrorMessage = "Nieprawid³owy email")]
         public string Email { get; set; }
+
+        [BindProperty]
+        public IFormFile Zdjecie { get; set; }
+
+        [BindProperty, Required(ErrorMessage = "Specjalizacja jest wymagana")]
+        public string Specjalizacja { get; set; }
+
+        [BindProperty, Required(ErrorMessage = "Telefon jest wymagany")]
+        public string Telefon { get; set; }
 
         [BindProperty, Required(ErrorMessage = "Has³o jest wymagane")]
         [StringLength(100, MinimumLength = 6, ErrorMessage = "Min. 6 znaków")]
@@ -38,26 +53,32 @@ namespace KontrolaNawyków.Pages.Account.Dietitian
         {
             if (!ModelState.IsValid) return Page();
 
-            if (await _context.Users.AnyAsync(u => u.Username == Username))
-            {
-                ErrorMessage = "Nazwa u¿ytkownika ju¿ istnieje.";
-                return Page();
-            }
-            if (await _context.Users.AnyAsync(u => u.Email == Email))
+            if (await _context.Dietetycy.AnyAsync(d => d.Email == Email))
             {
                 ErrorMessage = "Email ju¿ u¿ywany.";
                 return Page();
             }
 
-            var user = new User
+            byte[] zdjData = null;
+            if (Zdjecie != null && Zdjecie.Length > 0)
             {
-                Username = Username,
+                using var ms = new MemoryStream();
+                await Zdjecie.CopyToAsync(ms);
+                zdjData = ms.ToArray();
+            }
+
+            var dietetyk = new Dietetyk
+            {
+                Imie = Imie,
+                Nazwisko = Nazwisko,
                 Email = Email,
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(Password),
-                CreatedAt = DateTime.UtcNow
-                // tutaj mo¿esz dodaæ Role = "Dietitian"
+                Zdjecie = zdjData,
+                Specjalizacja = Specjalizacja,
+                Telefon = Telefon,
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(Password)
             };
-            _context.Users.Add(user);
+
+            _context.Dietetycy.Add(dietetyk);
             await _context.SaveChangesAsync();
 
             TempData["RegisterSuccess"] = "Zarejestrowano dietetyka pomyœlnie!";

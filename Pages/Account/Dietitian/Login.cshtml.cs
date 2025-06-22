@@ -1,12 +1,15 @@
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
+using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Security.Claims;
+using System.Threading.Tasks;
 using KontrolaNawykow.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using System.Security.Claims;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
 
 namespace KontrolaNawyków.Pages.Account.Dietitian
 {
@@ -14,50 +17,53 @@ namespace KontrolaNawyków.Pages.Account.Dietitian
     public class LoginModel : PageModel
     {
         private readonly ApplicationDbContext _context;
+        public LoginModel(ApplicationDbContext context) => _context = context;
 
-        public LoginModel(ApplicationDbContext context)
-        {
-            _context = context;
-        }
+        [BindProperty, Required(ErrorMessage = "Email jest wymagany")]
+        [EmailAddress(ErrorMessage = "Nieprawid³owy email")]
+        public string Email { get; set; }
 
-        [BindProperty, Required(ErrorMessage = "Nazwa u¿ytkownika jest wymagana")]
-        public string Username { get; set; }
-
-        [BindProperty, Required(ErrorMessage = "Has³o jest wymagane"), DataType(DataType.Password)]
+        [BindProperty, Required(ErrorMessage = "Has³o jest wymagane")]
+        [DataType(DataType.Password)]
         public string Password { get; set; }
 
         public string ErrorMessage { get; set; }
 
-        public void OnGet()
-        {
-            // tutaj ewentualnie TempData na sukces rejestracji dietetyka
-        }
+        public void OnGet() { }
 
         public async Task<IActionResult> OnPostAsync()
         {
-            if (!ModelState.IsValid)
-                return Page();
+            if (!ModelState.IsValid) return Page();
 
-            // LOGIKA LOGOWANIA (do dostosowania, np. sprawdzenie roli “Dietitian”)
-            var user = await _context.Users.SingleOrDefaultAsync(u => u.Username == Username);
-            if (user == null || !BCrypt.Net.BCrypt.Verify(Password, user.PasswordHash))
+            var dietetyk = await _context.Dietetycy
+                .SingleOrDefaultAsync(d => d.Email == Email);
+
+            if (dietetyk == null ||
+                !BCrypt.Net.BCrypt.Verify(Password, dietetyk.PasswordHash))
             {
-                ErrorMessage = "Nieprawid³owa nazwa u¿ytkownika lub has³o.";
+                ErrorMessage = "Nieprawid³owy email lub has³o.";
                 return Page();
             }
 
             var claims = new List<Claim>
             {
-                new Claim(ClaimTypes.Name, user.Username),
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Email, user.Email)
-                // tutaj mo¿esz dodaæ claim o roli dietetyka
+                new Claim(ClaimTypes.NameIdentifier, dietetyk.Id.ToString()),
+                new Claim(ClaimTypes.Email,           dietetyk.Email),
+                new Claim(ClaimTypes.Name,            $"{dietetyk.Imie} {dietetyk.Nazwisko}"),
+                new Claim(ClaimTypes.Role,            "Dietitian")
             };
-            var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(identity),
-                new AuthenticationProperties { IsPersistent = true, ExpiresUtc = DateTimeOffset.UtcNow.AddDays(7) });
 
-            return RedirectToPage("/Diet/Index"); // panel dietetyka
+            var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            await HttpContext.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                new ClaimsPrincipal(identity),
+                new AuthenticationProperties
+                {
+                    IsPersistent = true,
+                    ExpiresUtc = DateTimeOffset.UtcNow.AddDays(7)
+                });
+
+            return RedirectToPage("/Diet/Index");
         }
     }
 }

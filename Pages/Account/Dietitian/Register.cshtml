@@ -12,52 +12,90 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Rejestracja dietetyka - KontrolaNawyków</title>
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link href="https://fonts.googleapis.com/css2?family=Purple+Purse&display=swap" rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Charmonman:wght@400;700&display=swap" rel="stylesheet" />
 </head>
 <body>
     <div class="login-container">
-        <div class="login-form-section" style="background-image: url('/images/tlo.jpg')">
-            <div class="login-form-overlay"></div>
+        <div class="login-form-section">
             <div class="login-form-content">
-                <h1 class="login-title font-purple-purse">Rejestracja dietetyka</h1>
+                <h1 class="login-title">Rejestracja dietetyka</h1>
 
                 @if (!string.IsNullOrEmpty(Model.ErrorMessage))
                 {
                     <div class="alert-danger">@Model.ErrorMessage</div>
                 }
 
-                <form method="post">
+                <form method="post" enctype="multipart/form-data">
                     @Html.AntiForgeryToken()
+
                     <div class="form-group">
-                        <input type="text" name="Username" id="Username" class="login-input" placeholder="Nazwa użytkownika" required />
-                        <span asp-validation-for="Username" class="text-danger"></span>
+                        <input type="text"
+                               name="Imie" id="Imie"
+                               class="login-input"
+                               placeholder="Imię"
+                               required />
                     </div>
+
                     <div class="form-group">
-                        <input type="email" name="Email" id="Email" class="login-input" placeholder="Email" required />
-                        <span asp-validation-for="Email" class="text-danger"></span>
+                        <input type="text"
+                               name="Nazwisko" id="Nazwisko"
+                               class="login-input"
+                               placeholder="Nazwisko"
+                               required />
                     </div>
+
                     <div class="form-group">
-                        <input type="password" name="Password" id="Password" class="login-input" placeholder="Hasło" required />
-                        <span asp-validation-for="Password" class="text-danger"></span>
+                        <input type="email"
+                               name="Email" id="Email"
+                               class="login-input"
+                               placeholder="Email"
+                               required />
                     </div>
+
                     <div class="form-group">
-                        <input type="password" name="ConfirmPassword" id="ConfirmPassword" class="login-input" placeholder="Potwierdź hasło" required />
-                        <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+                        <input type="file"
+                               name="Zdjecie" id="Zdjecie"
+                               class="login-input" />
                     </div>
+
+                    <div class="form-group">
+                        <input type="text"
+                               name="Specjalizacja" id="Specjalizacja"
+                               class="login-input"
+                               placeholder="Specjalizacja"
+                               required />
+                    </div>
+
+                    <div class="form-group">
+                        <input type="tel"
+                               name="Telefon" id="Telefon"
+                               class="login-input"
+                               placeholder="Telefon"
+                               required />
+                    </div>
+
+                    <div class="form-group">
+                        <input type="password"
+                               name="Password" id="Password"
+                               class="login-input"
+                               placeholder="Hasło"
+                               required />
+                    </div>
+
+                    <div class="form-group">
+                        <input type="password"
+                               name="ConfirmPassword" id="ConfirmPassword"
+                               class="login-input"
+                               placeholder="Potwierdź hasło"
+                               required />
+                    </div>
+
                     <button type="submit" class="login-button">Kontynuuj</button>
                 </form>
 
-                <div style="text-align:center; margin-top:1.5rem;">
-                    <p>
-                        Masz już konto?
-                        <a href="/Account/Dietitian/Login" class="register-link">Zaloguj się!</a>
-                    </p>
-                    <p>
-                        Jesteś użytkownikiem?
-                        <a href="/Account/Login" class="register-link">Zaloguj się jako użytkownik</a>
-                    </p>
-                </div>
+                <p style="margin-top:1rem;">
+                    Masz już konto? <a href="/Account/Dietitian/Login">Zaloguj się</a><br />
+                    Jesteś użytkownikiem? <a href="/Account/Login">Zaloguj się jako użytkownik</a>
+                </p>
             </div>
         </div>
     </div>

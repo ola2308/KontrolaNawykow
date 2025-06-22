@@ -12,13 +12,13 @@ namespace KontrolaNawykow.Models
         public int Id { get; set; }
 
         [Required, MaxLength(50)]
-        public string Username { get; set; }
+        public string Username { get; set; } = null!;
 
         [Required, EmailAddress]
-        public string Email { get; set; }
+        public string Email { get; set; } = null!;
 
         [Required]
-        public string PasswordHash { get; set; }
+        public string PasswordHash { get; set; } = null!;
 
         public DateTime? CreatedAt { get; set; } = DateTime.UtcNow;
         public Gender? Plec { get; set; }
@@ -42,21 +42,21 @@ namespace KontrolaNawykow.Models
 
         public int? DietetykId { get; set; }
         [ForeignKey("DietetykId")]
-        public Dietetyk Dietetyk { get; set; }
+        public Dietetyk? Dietetyk { get; set; }
         public int? DieticianAccepted { get; set; }
 
-        public List<Recipe> Recipes { get; set; }
-        public List<MealPlan> MealPlans { get; set; }
-        public List<CustomFood> CustomFoods { get; set; }
-        public List<ShoppingList> ShoppingLists { get; set; }
-        public List<ToDo> ToDos { get; set; }
-        public List<Statystyki> Statystyki { get; set; }
-        public List<NawykWPlanie> NawykiWPlanie { get; set; }
-        public Admin Admin { get; set; }
+        public List<Recipe> Recipes { get; set; } = new List<Recipe>();
+        public List<MealPlan> MealPlans { get; set; } = new List<MealPlan>();
+        public List<CustomFood> CustomFoods { get; set; } = new List<CustomFood>();
+        public List<ShoppingList> ShoppingLists { get; set; } = new List<ShoppingList>();
+        public List<ToDo> ToDos { get; set; } = new List<ToDo>();
+        public List<Statystyki> Statystyki { get; set; } = new List<Statystyki>();
+        public List<NawykWPlanie> NawykiWPlanie { get; set; } = new List<NawykWPlanie>();
+        public Admin? Admin { get; set; }
 
         // NOWE: Relacje do ocen
-        public List<RecipeRating> RecipeRatings { get; set; }
-        public List<DietetykRating> DietetykRatings { get; set; }
+        public List<RecipeRating> RecipeRatings { get; set; } = new List<RecipeRating>();
+        public List<DietetykRating> DietetykRatings { get; set; } = new List<DietetykRating>();
     }
 
     public enum Gender
@@ -78,33 +78,33 @@ namespace KontrolaNawykow.Models
         public int Id { get; set; }
 
         [Required]
-        public string Name { get; set; }
+        public string Name { get; set; } = null!;
 
         public int Calories { get; set; }
         public float Protein { get; set; }
         public float Fat { get; set; }
         public float Carbs { get; set; }
-        public string Instructions { get; set; }
-        public byte[] ImageData { get; set; }
+        public string Instructions { get; set; } = null!;
+        public byte[] ImageData { get; set; } = Array.Empty<byte>();
 
         public int UserId { get; set; }
-        public User User { get; set; }
+        public User User { get; set; } = null!;
 
         public bool IsPublic { get; set; }
 
-        public List<RecipeIngredient> RecipeIngredients { get; set; }
-        public List<MealPlan> MealPlans { get; set; }
-        public List<PlanPosilkowPrzepis> PlanPosilkowPrzepisy { get; set; }
+        public List<RecipeIngredient> RecipeIngredients { get; set; } = new List<RecipeIngredient>();
+        public List<MealPlan> MealPlans { get; set; } = new List<MealPlan>();
+        public List<PlanPosilkowPrzepis> PlanPosilkowPrzepisy { get; set; } = new List<PlanPosilkowPrzepis>();
 
         // NOWE: Relacja do ocen
-        public List<RecipeRating> Ratings { get; set; }
+        public List<RecipeRating> Ratings { get; set; } = new List<RecipeRating>();
 
         // NOWE: Właściwości obliczeniowe dla ocen
         [NotMapped]
-        public double AverageRating => Ratings?.Any() == true ? Ratings.Average(r => r.Rating) : 0;
+        public double AverageRating => Ratings.Any() ? Ratings.Average(r => r.Rating) : 0;
 
         [NotMapped]
-        public int RatingCount => Ratings?.Count ?? 0;
+        public int RatingCount => Ratings.Count;
     }
 
     public class RecipeIngredient
@@ -114,11 +114,11 @@ namespace KontrolaNawykow.Models
 
         [ForeignKey("Recipe")]
         public int RecipeId { get; set; }
-        public Recipe Recipe { get; set; }
+        public Recipe Recipe { get; set; } = null!;
 
         [ForeignKey("Ingredient")]
         public int IngredientId { get; set; }
-        public Ingredient Ingredient { get; set; }
+        public Ingredient Ingredient { get; set; } = null!;
 
         public float? Amount { get; set; }
     }
@@ -129,15 +129,15 @@ namespace KontrolaNawykow.Models
         public int Id { get; set; }
 
         [Required]
-        public string Name { get; set; }
+        public string Name { get; set; } = null!;
 
         public int Calories { get; set; }
         public float Protein { get; set; }
         public float Fat { get; set; }
         public float Carbs { get; set; }
 
-        public List<RecipeIngredient> RecipeIngredients { get; set; }
-        public List<ShoppingList> ShoppingLists { get; set; }
+        public List<RecipeIngredient> RecipeIngredients { get; set; } = new List<RecipeIngredient>();
+        public List<ShoppingList> ShoppingLists { get; set; } = new List<ShoppingList>();
     }
 
     public class MealPlan
@@ -146,21 +146,21 @@ namespace KontrolaNawykow.Models
         public int Id { get; set; }
 
         public int UserId { get; set; }
-        public User User { get; set; }
+        public User User { get; set; } = null!;
 
         public MealType MealType { get; set; }
         public DateTime? Date { get; set; }
 
         public int? RecipeId { get; set; }
         [ForeignKey("RecipeId")]
-        public Recipe Recipe { get; set; }
+        public Recipe? Recipe { get; set; }
 
-        public string CustomEntry { get; set; }
+        public string CustomEntry { get; set; } = null!;
         public bool Eaten { get; set; }
         public float? Gramature { get; set; } = 100;
 
-        public List<PlanPosilkowPrzepis> PlanPosilkowPrzepisy { get; set; }
-        public List<ListaZakupow> ListaZakupow { get; set; }
+        public List<PlanPosilkowPrzepis> PlanPosilkowPrzepisy { get; set; } = new List<PlanPosilkowPrzepis>();
+        public List<ListaZakupow> ListaZakupow { get; set; } = new List<ListaZakupow>();
         public int? CustomCalories { get; set; }
         public float? CustomProtein { get; set; }
         public float? CustomCarbs { get; set; }
@@ -173,10 +173,10 @@ namespace KontrolaNawykow.Models
         public int Id { get; set; }
 
         public int PlanPosilkowId { get; set; }
-        public MealPlan PlanPosilkow { get; set; }
+        public MealPlan PlanPosilkow { get; set; } = null!;
 
         public int PrzepisId { get; set; }
-        public Recipe Przepis { get; set; }
+        public Recipe Przepis { get; set; } = null!;
     }
 
     public enum MealType
@@ -193,9 +193,9 @@ namespace KontrolaNawykow.Models
         public int Id { get; set; }
 
         public int UserId { get; set; }
-        public User User { get; set; }
+        public User User { get; set; } = null!;
 
-        public string Name { get; set; }
+        public string Name { get; set; } = null!;
         public int Calories { get; set; }
         public float Protein { get; set; }
         public float Fat { get; set; }
@@ -208,10 +208,10 @@ namespace KontrolaNawykow.Models
         public int Id { get; set; }
 
         public int UserId { get; set; }
-        public User User { get; set; }
+        public User User { get; set; } = null!;
 
         public int IngredientId { get; set; }
-        public Ingredient Ingredient { get; set; }
+        public Ingredient Ingredient { get; set; } = null!;
 
         public float Amount { get; set; }
         public bool Status { get; set; }
@@ -223,7 +223,7 @@ namespace KontrolaNawykow.Models
         public int Id { get; set; }
 
         public int PlanPosilkowId { get; set; }
-        public MealPlan PlanPosilkow { get; set; }
+        public MealPlan PlanPosilkow { get; set; } = null!;
 
         public StatusRodzaj Status { get; set; }
     }
@@ -240,9 +240,9 @@ namespace KontrolaNawykow.Models
         public int Id { get; set; }
 
         public int UserId { get; set; }
-        public User User { get; set; }
+        public User User { get; set; } = null!;
 
-        public string Task { get; set; }
+        public string Task { get; set; } = null!;
         public bool IsCompleted { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public bool IsTemplate { get; set; } = false;
@@ -252,23 +252,37 @@ namespace KontrolaNawykow.Models
     {
         [Key]
         public int Id { get; set; }
-        public string Imie { get; set; }
-        public string Nazwisko { get; set; }
-        public string Email { get; set; }
-        public byte[] Zdjecie { get; set; }
-        public string Specjalizacja { get; set; }
-        public string Telefon { get; set; }
 
-        public List<User> Users { get; set; }
+        [Required]
+        public string Imie { get; set; } = null!;
+
+        [Required]
+        public string Nazwisko { get; set; } = null!;
+
+        [Required, EmailAddress]
+        public string Email { get; set; } = null!;
+
+        public byte[]? Zdjecie { get; set; }
+
+        [Required]
+        public string Specjalizacja { get; set; } = null!;
+
+        [Required]
+        public string Telefon { get; set; } = null!;
+
+        [Required]
+        public string PasswordHash { get; set; } = null!;
+
+        public List<User> Users { get; set; } = new List<User>();
 
         // NOWE: Relacja do ocen
-        public List<DietetykRating> Ratings { get; set; }
+        public List<DietetykRating> Ratings { get; set; } = new List<DietetykRating>();
 
         [NotMapped]
-        public double AverageRating => Ratings?.Any() == true ? Ratings.Average(r => r.Rating) : 0;
+        public double AverageRating => Ratings.Any() ? Ratings.Average(r => r.Rating) : 0;
 
         [NotMapped]
-        public int RatingCount => Ratings?.Count ?? 0;
+        public int RatingCount => Ratings.Count;
     }
 
     public class Admin
@@ -278,9 +292,9 @@ namespace KontrolaNawykow.Models
 
         public int UzytkownikId { get; set; }
         [ForeignKey("UzytkownikId")]
-        public User Uzytkownik { get; set; }
+        public User Uzytkownik { get; set; } = null!;
 
-        public List<Blokada> Blokady { get; set; }
+        public List<Blokada> Blokady { get; set; } = new List<Blokada>();
     }
 
     public class Blokada
@@ -290,17 +304,17 @@ namespace KontrolaNawykow.Models
 
         public int UzytkownikId { get; set; }
         [ForeignKey("UzytkownikId")]
-        public User Uzytkownik { get; set; }
+        public User Uzytkownik { get; set; } = null!;
 
         public int AdminId { get; set; }
         [ForeignKey("AdminId")]
-        public Admin Admin { get; set; }
+        public Admin Admin { get; set; } = null!;
 
         public DateTime DataPoczatku { get; set; }
         public DateTime? DataKonca { get; set; }
-        public string Powod { get; set; }
+        public string Powod { get; set; } = null!;
 
-        public List<Zgloszenie> Zgloszenia { get; set; }
+        public List<Zgloszenie> Zgloszenia { get; set; } = new List<Zgloszenie>();
     }
 
     public class Zgloszenie
@@ -310,20 +324,20 @@ namespace KontrolaNawykow.Models
 
         public int IdZglaszajacego { get; set; }
         [ForeignKey("IdZglaszajacego")]
-        public User Zglaszajacy { get; set; }
+        public User Zglaszajacy { get; set; } = null!;
 
         public int? IdBlokady { get; set; }
         [ForeignKey("IdBlokady")]
-        public Blokada Blokada { get; set; }
+        public Blokada? Blokada { get; set; }
 
-        public string Powod { get; set; }
+        public string Powod { get; set; } = null!;
         public DateTime Data { get; set; } = DateTime.UtcNow;
         public TypZgloszenia Typ { get; set; }
         public StatusZgloszenia Status { get; set; }
 
         public int? IdZglaszanego { get; set; }
         [ForeignKey("IdZglaszanego")]
-        public User Zglaszany { get; set; }
+        public User? Zglaszany { get; set; }
     }
 
     public enum TypZgloszenia
@@ -346,12 +360,12 @@ namespace KontrolaNawykow.Models
         [Key]
         public int Id { get; set; }
 
-        public string Nazwa { get; set; }
+        public string Nazwa { get; set; } = null!;
         public bool Cykliczny { get; set; }
         public bool Wykonany { get; set; }
         public DateTime DataUtworzenia { get; set; } = DateTime.UtcNow;
 
-        public List<NawykWPlanie> NawykiWPlanie { get; set; }
+        public List<NawykWPlanie> NawykiWPlanie { get; set; } = new List<NawykWPlanie>();
     }
 
     public class NawykWPlanie
@@ -361,13 +375,13 @@ namespace KontrolaNawykow.Models
 
         public int NawykId { get; set; }
         [ForeignKey("NawykId")]
-        public Nawyk Nawyk { get; set; }
+        public Nawyk Nawyk { get; set; } = null!;
 
         public DzienTygodnia Dzien { get; set; }
 
         public int UzytkownikId { get; set; }
         [ForeignKey("UzytkownikId")]
-        public User Uzytkownik { get; set; }
+        public User Uzytkownik { get; set; } = null!;
     }
 
     public enum DzienTygodnia
@@ -388,7 +402,7 @@ namespace KontrolaNawykow.Models
 
         public int UzytkownikId { get; set; }
         [ForeignKey("UzytkownikId")]
-        public User Uzytkownik { get; set; }
+        public User Uzytkownik { get; set; } = null!;
 
         public DateTime Data { get; set; }
         public double Waga { get; set; }
@@ -400,7 +414,7 @@ namespace KontrolaNawykow.Models
     {
         public int UserId { get; set; }
         [ForeignKey(nameof(UserId))]
-        public User User { get; set; }
+        public User User { get; set; } = null!;
         public int TotalRecipes { get; set; }
         public int TotalMealPlans { get; set; }
         public int CompletedTasks { get; set; }
@@ -415,17 +429,17 @@ namespace KontrolaNawykow.Models
 
         public int RecipeId { get; set; }
         [ForeignKey("RecipeId")]
-        public Recipe Recipe { get; set; }
+        public Recipe Recipe { get; set; } = null!;
 
         public int UserId { get; set; }
         [ForeignKey("UserId")]
-        public User User { get; set; }
+        public User User { get; set; } = null!;
 
         [Range(1, 5, ErrorMessage = "Ocena musi być między 1 a 5")]
         public int Rating { get; set; }
 
         [MaxLength(500)]
-        public string Comment { get; set; }
+        public string Comment { get; set; } = null!;
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
@@ -437,17 +451,17 @@ namespace KontrolaNawykow.Models
 
         public int DietetykId { get; set; }
         [ForeignKey("DietetykId")]
-        public Dietetyk Dietetyk { get; set; }
+        public Dietetyk Dietetyk { get; set; } = null!;
 
         public int UserId { get; set; }
         [ForeignKey("UserId")]
-        public User User { get; set; }
+        public User User { get; set; } = null!;
 
         [Range(1, 5, ErrorMessage = "Ocena musi być między 1 a 5")]
         public int Rating { get; set; }
 
         [MaxLength(500)]
-        public string Comment { get; set; }
+        public string Comment { get; set; } = null!;
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
