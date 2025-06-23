@@ -7,7 +7,7 @@ using KontrolaNawykow.Models;
 
 namespace KontrolaNawykow.Pages.Dietician
 {
-    [Authorize]
+    [Authorize(Roles = "Dietitian")]
     public class WaitingClientsModel : PageModel
     {
         private readonly ApplicationDbContext _context;
@@ -32,25 +32,17 @@ namespace KontrolaNawykow.Pages.Dietician
             {
                 if (!User.Identity.IsAuthenticated)
                 {
-                    return RedirectToPage("/Account/Login");
+                    return RedirectToPage("/Account/Dietitian/Login");
                 }
 
-                var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
+                var dietIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (string.IsNullOrEmpty(dietIdClaim) || !int.TryParse(dietIdClaim, out int dietId))
                 {
-                    return RedirectToPage("/Account/Login");
-                }
-
-                CurrentUser = await _context.Users
-                    .FirstOrDefaultAsync(u => u.Id == userId);
-
-                if (CurrentUser == null)
-                {
-                    return RedirectToPage("/Account/Login");
+                    return RedirectToPage("/Account/Dietitian/Login");
                 }
 
                 CurrentDietician = await _context.Dietetycy
-                    .FirstOrDefaultAsync(u => u.Id == 1);
+                    .FirstOrDefaultAsync(u => u.Id == dietId);
 
                 if (CurrentDietician == null)
                 {
@@ -58,7 +50,7 @@ namespace KontrolaNawykow.Pages.Dietician
                 }
 
                 Clients = await _context.Users
-                    .Where(u => u.DietetykId == 1)
+                    .Where(u => u.DietetykId == dietId)
                     .Where(u => u.DieticianAccepted == null)
                     .ToListAsync();
 
@@ -80,7 +72,7 @@ namespace KontrolaNawykow.Pages.Dietician
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"B³¹d podczas ³adowania strony YourDietician: {ex.Message}");
+                Console.WriteLine($"B³¹d podczas ³adowania strony Dietician/WaitingClients: {ex.Message}");
                 return RedirectToPage("/Error");
             }
         }

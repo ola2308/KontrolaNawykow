@@ -63,7 +63,7 @@ namespace KontrolaNawyków.Pages.Account.Dietitian
                     ExpiresUtc = DateTimeOffset.UtcNow.AddDays(7)
                 });
 
-            return RedirectToPage("/Account/Dietitian/Dashboard");
+            return RedirectToPage("/Dietician/Index");
         }
     }
 }
