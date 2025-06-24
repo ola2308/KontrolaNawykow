@@ -26,6 +26,8 @@ namespace KontrolaNawykow.Models
         public DbSet<RecipeRating> RecipeRatings { get; set; }
         public DbSet<DietetykRating> DietetykRatings { get; set; }
 
+        public DbSet<FridgeItem> FridgeItems { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

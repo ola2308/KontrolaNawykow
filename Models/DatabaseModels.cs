@@ -136,6 +136,8 @@ namespace KontrolaNawykow.Models
         public float Fat { get; set; }
         public float Carbs { get; set; }
 
+        public string Unit { get; set; } = "g";
+
         public List<RecipeIngredient> RecipeIngredients { get; set; } = new List<RecipeIngredient>();
         public List<ShoppingList> ShoppingLists { get; set; } = new List<ShoppingList>();
     }
@@ -464,5 +466,24 @@ namespace KontrolaNawykow.Models
         public string Comment { get; set; } = null!;
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    }
+
+    public class FridgeItem
+    {
+        [Key]
+        public int Id { get; set; }
+
+        [Required]
+        public string Name { get; set; } = null!;
+
+        [Required(ErrorMessage = "Podaj ilosc")]
+        public int Amount { get; set; }
+
+        [Required]
+        public string Unit { get; set; } = "g";
+
+        [ForeignKey("UserId")]
+        public int UserId { get; set; }
+
     }
 }

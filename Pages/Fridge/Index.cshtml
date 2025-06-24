@@ -1,0 +1,577 @@
+﻿@page
+@model KontrolaNawykow.Pages.Fridge.IndexModel
+@* Włącz "asp-..." TagHelpery bez ViewImport *@
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@{
+    ViewData["Title"] = "Lodówka";
+}
+
+<div class="profile-container">
+    <!-- Header Navigation -->
+    <div class="navigation-header">
+        <div class="nav-tabs">
+            <a href="/Diet" class="nav-tab">Dieta</a>
+            <a href="/ToDo" class="nav-tab">ToDo</a>
+            <a href="/Admin" class="nav-tab">Admin</a>
+            <a href="/YourDietician/Index" class="nav-tab">Twój dietetyk</a>
+            <a href="/Fridge/Index" class="nav-tab active">Lodówka</a>
+        </div>
+        <div class="nav-actions">
+            <form method="post" action="/Account/Logout" style="display: inline;">
+                <button type="submit" class="logout-btn">🚪 Wyloguj</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="profile-header">
+        <h1 class="profile-title">Lodówka</h1>
+    </div>
+
+    <!-- Sekcja: Produkty w lodówce -->
+    <div class="profile-card">
+        <div class="card-header">
+            <h2>📦 Produkty</h2>
+        </div>
+
+        <form method="post" asp-page-handler="Add">
+            @Html.AntiForgeryToken()
+            @Html.ValidationSummary(true, "", new { @class = "text-danger"})
+            <div class="form-group">
+                <input type="text" name="Name" placeholder="Nazwa" class="form-cell" required />
+                <input type="number" step="0.01" name="Amount" placeholder="Ilość" class="form-cell" required />
+                <input type="text" name="Unit" placeholder="Jednostka" class="form-cell" required />
+                <button type="submit" class="btn-add">➕ Dodaj</button>
+            </div>
+        </form>
+
+        <table class="fridge-table">
+            <thead>
+                <tr>
+                   <th></th>
+                    <th>Nazwa</th>
+                    <th>Ilość</th>
+                    <th>Jednostka</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.FridgeItems)
+                {
+                        <tr>
+                             <td>
+                                <input type="checkbox" name="SelectedIds" value="@item.Id" />
+                             </td>
+                            <td>@item.Name</td>
+                            <td>@item.Amount</td>
+                            <td>@item.Unit</td>
+                            <td>
+                                <form method="post" asp-page-handler="Delete" asp-route-id="@item.Id" style="display:inline;">
+                                @Html.AntiForgeryToken()
+                                    <button type="submit" class="delete-btn">🗑</button>
+                                </form>
+                            </td>
+                        </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Sekcja: Lista zakupów -->
+    <div class="profile-card shopping-card">
+        <div class="card-header">
+            <h2>🛒 Lista zakupów</h2>
+            <form method="post" asp-page-handler="GenerateShoppingList" style="display: inline;">
+                <button type="submit" class="download-btn">📥 Pobierz</button>
+            </form>
+        </div>
+        @if (Model.ShoppingLists.Any())
+        {
+                <div class="shopping-list">
+                    <ul class="ingredients-list">
+                    @foreach (var item in Model.ShoppingLists)
+                    {
+                                <li class="ingredient-item">
+                                    <span class="ingredient-name">@item.Ingredient.Name</span>
+                                    <span class="ingredient-amount">@item.Amount @item.Ingredient.Unit</span>
+                                </li>
+                    }
+                    </ul>
+                </div>
+        }
+        else
+        {
+                <div class="empty-state">
+                    <div class="empty-icon">🛒</div>
+                    <p class="empty-message">Brak składników do wyświetlenia.<br>Dodaj posiłki lub wygeneruj listę zakupów.</p>
+                </div>
+        }
+    </div>
+</div>
+
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        min-height: 100vh;
+    }
+
+    /* Navigation Header */
+    .navigation-header {
+        background: linear-gradient(135deg, #e91e63 0%, #ad1457 100%);
+        padding: 0;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .nav-tabs {
+        display: flex;
+        padding: 0 20px;
+    }
+
+    .nav-actions {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        padding: 0 20px;
+    }
+
+    .nav-tab {
+        color: rgba(255,255,255,0.8);
+        text-decoration: none;
+        padding: 15px 25px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        border-bottom: 3px solid transparent;
+        font-size: 16px;
+    }
+
+    .nav-tab:hover {
+        color: white;
+        background: rgba(255,255,255,0.1);
+    }
+
+    .nav-tab.active {
+        color: white;
+        border-bottom-color: #fff;
+        background: rgba(255,255,255,0.15);
+    }
+
+    .profile-link {
+        color: white;
+        text-decoration: none;
+        padding: 8px 16px;
+        border-radius: 20px;
+        background: rgba(255,255,255,0.15);
+        font-weight: 600;
+        font-size: 14px;
+        transition: all 0.3s ease;
+        border: 1px solid rgba(255,255,255,0.2);
+    }
+
+    .profile-link:hover {
+        background: rgba(255,255,255,0.25);
+        transform: translateY(-1px);
+        color: white;
+        text-decoration: none;
+    }
+
+    .logout-btn {
+        background: rgba(255,255,255,0.1);
+        color: white;
+        border: 1px solid rgba(255,255,255,0.3);
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .logout-btn:hover {
+        background: rgba(255,255,255,0.2);
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+
+    /* Profile Container */
+    .profile-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 30px 20px;
+    }
+
+    .profile-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+        background: white;
+        padding: 25px 30px;
+        border-radius: 15px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+
+    .profile-title {
+        font-size: 2.5rem;
+        color: #333;
+        margin: 0;
+        font-weight: 700;
+        background: linear-gradient(135deg, #e91e63, #ad1457);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .back-button {
+        background: linear-gradient(135deg, #e91e63, #ad1457);
+        color: white;
+        padding: 12px 24px;
+        border-radius: 25px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(233, 30, 99, 0.3);
+    }
+
+    .back-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(233, 30, 99, 0.4);
+        color: white;
+        text-decoration: none;
+    }
+
+    /* Profile Content Grid */
+    .profile-content {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 25px;
+    }
+
+    /* Profile Cards */
+    .profile-card {
+        background: white;
+        border-radius: 20px;
+        padding: 25px;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        border: 1px solid rgba(233, 30, 99, 0.1);
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 30px;
+    }
+
+    .profile-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(135deg, #e91e63, #ad1457);
+    }
+
+    .profile-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 40px rgba(0,0,0,0.12);
+    }
+
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid #f0f0f0;
+    }
+
+    .card-header h2 {
+        color: #333;
+        font-size: 1.4rem;
+        font-weight: 600;
+        margin: 0;
+    }
+
+    .edit-icon {
+        font-size: 1.2rem;
+        text-decoration: none;
+        padding: 8px;
+        border-radius: 50%;
+        background: rgba(233, 30, 99, 0.1);
+        transition: all 0.3s ease;
+    }
+
+    .edit-icon:hover {
+        background: rgba(233, 30, 99, 0.2);
+        transform: scale(1.1);
+    }
+
+    .add-form .form-group input {
+        min-width: 150px;
+        padding: 10px;
+        font-size: 14px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        flex: 1;
+    }
+
+    .add-form .form-group {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    .add-form input::placeholder{
+        color: #aaa;
+    }
+
+    /*formularz dodawania produktow*/
+
+    .full-width-form {
+    width: 100%;
+    margin-bottom: 20px;
+    }
+
+    .form-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        width: 100%;
+    }
+
+    .form-cell {
+        flex: 1;
+        min-width: 150px;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+    }
+
+    .form-button {
+        padding: 10px 20px;
+        background-color: #e91e63;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        flex-shrink: 0;
+    }
+
+    .form-button:hover {
+        background-color: #c2185b;
+    }
+
+
+    /*tabela z zawartoscia lodowki*/
+    .fridge-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    background-color: #fff;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+
+    .fridge-table thead {
+        background: #f2f2f2;
+    }
+
+    .fridge-table th,
+    .fridge-table td {
+        padding: 12px 16px;
+        text-align: left;
+        font-size: 15px;
+        color: #333;
+    }
+
+    .fridge-table th {
+        font-weight: 600;
+        color: #555;
+        border-bottom: 2px solid #ddd;
+    }
+
+    .fridge-table tr:not(:last-child) {
+        border-bottom: 1px solid #eee;
+    }
+
+    .fridge-table tr:hover {
+        background-color: #f9f9f9;
+    }
+
+    .delete-btn {
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        font-size: 1.2rem;
+        color: #e91e63;
+        transition: transform 0.2s;
+    }
+
+    .delete-btn:hover {
+        transform: scale(1.2);
+    }
+
+    /* BMI Colors */
+    .profile-value.bmi-underweight { color: #ff9800; }
+    .profile-value.bmi-normal { color: #4caf50; }
+    .profile-value.bmi-overweight { color: #f44336; }
+
+
+    /* Shopping List */
+    .download-btn {
+        background: linear-gradient(135deg, #00b894, #00a085);
+        color: white;
+        border: none;
+        padding: 8px 15px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .download-btn:hover {
+        transform: scale(1.05);
+    }
+
+    .ingredients-list {
+        list-style: none;
+        max-height: 300px;
+        overflow-y: auto;
+    }
+
+    .ingredient-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 1px solid #f0f0f0;
+        transition: all 0.3s ease;
+    }
+
+    .ingredient-item:hover {
+        background: rgba(233, 30, 99, 0.02);
+        padding-left: 10px;
+    }
+
+    .ingredient-name {
+        font-weight: 500;
+        color: #333;
+    }
+
+    .ingredient-amount {
+        color: #e91e63;
+        font-weight: 600;
+        background: rgba(233, 30, 99, 0.1);
+        padding: 4px 12px;
+        border-radius: 15px;
+        font-size: 0.9rem;
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 30px;
+        color: #888;
+    }
+
+    .empty-icon {
+        font-size: 3rem;
+        margin-bottom: 15px;
+        opacity: 0.5;
+    }
+
+    .empty-message {
+        font-style: italic;
+        line-height: 1.5;
+    }
+
+    /* Responsive Design */
+    @@media (max-width: 768px) {
+        .navigation-header {
+            flex-direction: column;
+            padding: 10px 0;
+        }
+
+        .nav-tabs {
+            flex-wrap: wrap;
+            padding: 0 10px;
+            justify-content: center;
+        }
+
+        .nav-actions {
+            padding: 10px 20px 0;
+            justify-content: center;
+        }
+
+        .nav-tab {
+            padding: 12px 15px;
+            font-size: 14px;
+        }
+
+        .profile-container {
+            padding: 20px 15px;
+        }
+
+        .profile-header {
+            flex-direction: column;
+            gap: 15px;
+            text-align: center;
+        }
+
+        .profile-title {
+            font-size: 2rem;
+        }
+
+        .profile-content {
+            grid-template-columns: 1fr;
+        }
+
+        .nutrition-card {
+            grid-column: span 1;
+        }
+
+        .nutrition-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @@media (max-width: 480px) {
+        .nav-tabs {
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .nav-actions {
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .nutrition-grid {
+            gap: 10px;
+        }
+
+        .nutrition-item {
+            padding: 15px;
+        }
+
+        .nutrition-value {
+            font-size: 1.3rem;
+        }
+    }
+</style>
