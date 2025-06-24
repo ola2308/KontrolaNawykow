@@ -177,5 +177,11 @@ namespace KontrolaNawykow.Pages.Diet
             if (user.CustomProteinGrams < 40) user.CustomProteinGrams = 40;
             if (user.CustomFatGrams < 20) user.CustomFatGrams = 20;
         }
+
+        public bool adminCheck()
+        {
+            var CurrentAdmin = _context.Admins.Where(a => a.UzytkownikId == CurrentUser.Id);
+            return CurrentAdmin.Any();
+        }
     }
 }

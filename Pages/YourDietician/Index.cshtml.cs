@@ -66,5 +66,11 @@ namespace KontrolaNawykow.Pages.DieticianConnection
                 return RedirectToPage("/Error");
             }
         }
+
+        public bool adminCheck()
+        {
+            var CurrentAdmin = _context.Admins.Where(a => a.UzytkownikId == CurrentUser.Id);
+            return CurrentAdmin.Any();
+        }
     }
 }

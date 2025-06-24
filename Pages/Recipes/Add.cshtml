@@ -954,7 +954,7 @@
         <div class="nav-tabs">
             <a href="/Diet" class="nav-tab">Dieta</a>
             <a href="/ToDo" class="nav-tab">ToDo</a>
-            <a href="/Admin" class="nav-tab">Admin</a>
+            @if (Model.adminCheck()) {<a href="/Admin/Dashboard" class="nav-tab">Admin</a>}
             <a href="/Dietitian" class="nav-tab">Twój dietetyk</a>
         </div>
         <div class="nav-actions">

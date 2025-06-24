@@ -294,5 +294,12 @@ namespace KontrolaNawykow.Pages.Recipes
             public int IngredientId { get; set; }
             public float Amount { get; set; }
         }
+
+        public bool adminCheck()
+        {
+            return false;
+            //var CurrentAdmin = _context.Admins.Where(a => a.UzytkownikId == CurrentUser.Id);
+            //return CurrentAdmin.Any();
+        }
     }
 }

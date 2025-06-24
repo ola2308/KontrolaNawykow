@@ -141,5 +141,11 @@ namespace KontrolaNawykow.Pages.ToDo
                 default: return string.Empty;
             }
         }
+
+        public bool adminCheck()
+        {
+            var CurrentAdmin = _context.Admins.Where(a => a.UzytkownikId == CurrentUser.Id);
+            return CurrentAdmin.Any();
+        }
     }
 }
