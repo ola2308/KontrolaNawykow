@@ -3,14 +3,14 @@
 @{
     ViewData["Title"] = "ToDo";
     Layout = null;
-}<!DOCTYPE html>
+}
+<!DOCTYPE html>
 <html lang="pl">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ToDo - KontrolaNawyków</title>
     <style>
-        /* Zachowujemy oryginalny wygląd ToDo */
         /* Reset and base styles */
         * {
             margin: 0;
@@ -431,6 +431,7 @@
             text-align: center;
             font-weight: 500;
             color: #333;
+            position: relative;
         }
 
         .saved-activity-btn:hover {
@@ -491,6 +492,9 @@
             margin-top: 5px;
             opacity: 0;
             transition: all 0.3s ease;
+            position: absolute;
+            top: 5px;
+            right: 5px;
         }
 
         .saved-activity-btn:hover .delete-saved-btn {
@@ -499,6 +503,29 @@
 
         .delete-saved-btn:hover {
             background: #c82333;
+        }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #666;
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        .empty-state-message {
+            font-size: 1rem;
+            margin-bottom: 10px;
+        }
+
+        .empty-state-submessage {
+            font-size: 0.85rem;
+            color: #888;
         }
 
         /* Responsive Design */
@@ -611,7 +638,7 @@
     <!-- Week Navigation -->
     <div class="week-nav">
         <button class="week-arrow" onclick="changeWeek(-1)">❮</button>
-        <div class="week-date" id="weekDisplay">16.06 - 22.06</div>
+        <div class="week-date" id="weekDisplay"></div>
         <button class="week-arrow" onclick="changeWeek(1)">❯</button>
     </div>
 
@@ -665,32 +692,29 @@
     </div>
 
     <script>
-        // Sample data
+        // Configuration
         let currentWeekStart = new Date();
-        currentWeekStart.setDate(currentWeekStart.getDate() - currentWeekStart.getDay() + 1); // Monday
+        // Set to Monday of current week
+        const dayOfWeek = currentWeekStart.getDay();
+        const diff = currentWeekStart.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
+        currentWeekStart.setDate(diff);
 
-        let tasks = {
-            '2024-06-19': [
-                { id: 1, text: 'Wypicie 2L wody', completed: true },
-                { id: 2, text: 'Spacer 30 min', completed: false }
-            ]
-        };
-
-        let savedActivities = [
-            { id: 1, name: "🚶 Spacer 30 min" },
-            { id: 2, name: "💧 Wypicie 2L wody" },
-            { id: 3, name: "🧘 Medytacja 10 min" },
-            { id: 4, name: "📚 Czytanie 20 min" },
-            { id: 5, name: "🏃 Bieganie 20 min" },
-            { id: 6, name: "🥗 Zdrowy posiłek" },
-            { id: 7, name: "💤 8h snu" },
-            { id: 8, name: "🧽 Sprzątanie" }
-        ];
-
+        let tasks = {};
+        let savedActivities = [];
+        
         const dayNames = ['Poniedziałek', 'Wtorek', 'Środa', 'Czwartek', 'Piątek', 'Sobota', 'Niedziela'];
         let currentTaskDate = null;
         let selectedSavedActivity = null;
         let currentTab = 'manual';
+
+        // Inicjalizacja - ładowanie danych z serwera
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Initializing ToDo page...');
+            updateWeekDisplay();
+            generateDaysGrid();
+            loadTasksForWeek();
+            loadSavedActivities();
+        });
 
         function generateDaysGrid() {
             const daysGrid = document.getElementById('daysGrid');
@@ -730,11 +754,23 @@
 
         function renderTasks(dateStr) {
             const dayTasks = tasks[dateStr] || [];
+            console.log('Rendering tasks for', dateStr, ':', dayTasks);
+            
+            if (dayTasks.length === 0) {
+                return `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📝</div>
+                        <div class="empty-state-message">Brak zadań</div>
+                        <div class="empty-state-submessage">Dodaj pierwsze zadanie</div>
+                    </div>
+                `;
+            }
+            
             return dayTasks.map(task => `
                 <div class="task-item">
-                    <div class="task-checkbox ${task.completed ? 'completed' : ''}" 
+                    <div class="task-checkbox ${task.isCompleted ? 'completed' : ''}" 
                          onclick="toggleTask('${dateStr}', ${task.id})"></div>
-                    <div class="task-text ${task.completed ? 'completed' : ''}">${task.text}</div>
+                    <div class="task-text ${task.isCompleted ? 'completed' : ''}">${task.task}</div>
                     <button class="task-delete" onclick="deleteTask('${dateStr}', ${task.id})">🗑️</button>
                 </div>
             `).join('');
@@ -742,9 +778,22 @@
 
         function renderSavedActivities() {
             const savedGrid = document.getElementById('savedActivitiesGrid');
+            if (!savedGrid) return;
+            
+            if (savedActivities.length === 0) {
+                savedGrid.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">💾</div>
+                        <div class="empty-state-message">Brak zapisanych aktywności</div>
+                        <div class="empty-state-submessage">Dodaj zadanie z opcją "Zapisz jako szablon"</div>
+                    </div>
+                `;
+                return;
+            }
+            
             savedGrid.innerHTML = savedActivities.map(activity => `
-                <div class="saved-activity-btn" onclick="selectSavedActivity(${activity.id}, '${activity.name}')" data-id="${activity.id}">
-                    ${activity.name}
+                <div class="saved-activity-btn" onclick="selectSavedActivity(${activity.id}, '${activity.task.replace(/'/g, "\\'")}'))" data-id="${activity.id}">
+                    ${activity.task}
                     <button class="delete-saved-btn" onclick="event.stopPropagation(); deleteSavedActivity(${activity.id})">🗑️</button>
                 </div>
             `).join('');
@@ -754,8 +803,9 @@
             const endDate = new Date(currentWeekStart);
             endDate.setDate(currentWeekStart.getDate() + 6);
             
-            const startStr = `${currentWeekStart.getDate().toString().padStart(2, '0')}.${(currentWeekStart.getMonth() + 1).toString().padStart(2, '0')}`;
-            const endStr = `${endDate.getDate().toString().padStart(2, '0')}.${(endDate.getMonth() + 1).toString().padStart(2, '0')}`;
+            const options = { day: '2-digit', month: '2-digit' };
+            const startStr = currentWeekStart.toLocaleDateString('pl-PL', options);
+            const endStr = endDate.toLocaleDateString('pl-PL', options);
             
             document.getElementById('weekDisplay').textContent = `${startStr} - ${endStr}`;
         }
@@ -764,17 +814,97 @@
             currentWeekStart.setDate(currentWeekStart.getDate() + (direction * 7));
             updateWeekDisplay();
             generateDaysGrid();
+            loadTasksForWeek();
+        }
+
+        // *** API FUNCTIONS ***
+
+        async function loadTasksForWeek() {
+            try {
+                console.log('Loading tasks for week...');
+                
+                const response = await fetch('/api/todo');
+                if (response.ok) {
+                    const allTasks = await response.json();
+                    console.log('Loaded tasks:', allTasks);
+                    
+                    // Clear current tasks
+                    tasks = {};
+                    
+                    // Group tasks by date
+                    allTasks.forEach(task => {
+                        if (task.createdAt) {
+                            // Parse date properly
+                            const taskDate = new Date(task.createdAt);
+                            const year = taskDate.getFullYear();
+                            const month = String(taskDate.getMonth() + 1).padStart(2, '0');
+                            const day = String(taskDate.getDate()).padStart(2, '0');
+                            const dateStr = `${year}-${month}-${day}`;
+                            
+                            if (!tasks[dateStr]) {
+                                tasks[dateStr] = [];
+                            }
+                            
+                            tasks[dateStr].push({
+                                id: task.id,
+                                task: task.task,
+                                isCompleted: task.isCompleted,
+                                createdAt: task.createdAt
+                            });
+                        }
+                    });
+                    
+                    console.log('Grouped tasks by date:', tasks);
+                    
+                    // Refresh the grid
+                    generateDaysGrid();
+                } else {
+                    console.error('Error loading tasks:', response.status);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        async function loadSavedActivities() {
+            try {
+                console.log('Loading saved activities...');
+                
+                const response = await fetch('/api/todo/saved-activities');
+                if (response.ok) {
+                    savedActivities = await response.json();
+                    console.log('Loaded saved activities:', savedActivities);
+                    renderSavedActivities();
+                } else {
+                    console.error('Error loading saved activities:', response.status);
+                    savedActivities = [];
+                    renderSavedActivities();
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                savedActivities = [];
+                renderSavedActivities();
+            }
         }
 
         function openTaskModal(dateStr) {
             currentTaskDate = dateStr;
-            const date = new Date(dateStr);
-            const dayName = dayNames[date.getDay() === 0 ? 6 : date.getDay() - 1];
+            console.log('Opening task modal for date:', dateStr);
+            
+            const date = new Date(dateStr + 'T12:00:00');
+            const dayIndex = date.getDay();
+            const adjustedDayIndex = dayIndex === 0 ? 6 : dayIndex - 1;
+            const dayName = dayNames[adjustedDayIndex];
             const dateDisplay = `${date.getDate().toString().padStart(2, '0')}.${(date.getMonth() + 1).toString().padStart(2, '0')}`;
+            
             document.getElementById('modalDate').textContent = `${dayName}, ${dateDisplay}`;
             document.getElementById('taskModal').classList.add('show');
             document.getElementById('taskInput').focus();
             renderSavedActivities();
+            
+            // Reset selections
+            selectedSavedActivity = null;
+            document.querySelectorAll('.saved-activity-btn').forEach(btn => btn.classList.remove('selected'));
         }
 
         function closeModal() {
@@ -784,7 +914,7 @@
             selectedSavedActivity = null;
             switchTab('manual');
             
-            // Clear selected state
+            // Clear selections
             document.querySelectorAll('.saved-activity-btn').forEach(btn => {
                 btn.classList.remove('selected');
             });
@@ -822,7 +952,7 @@
             document.querySelector(`[data-id="${id}"]`).classList.add('selected');
         }
 
-        function addTask() {
+        async function addTask() {
             if (!currentTaskDate) return;
             
             let taskText = '';
@@ -843,58 +973,182 @@
                 }
                 taskText = selectedSavedActivity.name;
             }
+
+            console.log('Adding task:', taskText, 'for date:', currentTaskDate);
             
-            // Add to tasks
-            if (!tasks[currentTaskDate]) {
-                tasks[currentTaskDate] = [];
-            }
-            
-            const newTask = {
-                id: Date.now(),
-                text: taskText,
-                completed: false
+            // Format date for server (YYYY-MM-DD)
+            const taskData = {
+                date: currentTaskDate,
+                task: taskText,
+                saveAsTemplate: saveAsTemplate
             };
-            
-            tasks[currentTaskDate].push(newTask);
-            
-            // Save as template if requested
-            if (saveAsTemplate && currentTab === 'manual') {
-                const newActivity = {
-                    id: Date.now() + 1,
-                    name: taskText
-                };
-                savedActivities.push(newActivity);
-            }
-            
-            // Refresh the specific day's tasks
-            const tasksContainer = document.getElementById(`tasks-${currentTaskDate}`);
-            if (tasksContainer) {
-                tasksContainer.innerHTML = renderTasks(currentTaskDate);
-            }
-            
-            closeModal();
-        }
 
-        function toggleTask(dateStr, taskId) {
-            if (tasks[dateStr]) {
-                const task = tasks[dateStr].find(t => t.id === taskId);
-                if (task) {
-                    task.completed = !task.completed;
-                    document.getElementById(`tasks-${dateStr}`).innerHTML = renderTasks(dateStr);
+            console.log('Task data to send:', taskData);
+
+            // Block button during sending
+            const addButton = document.querySelector('.btn-primary');
+            const originalText = addButton.innerHTML;
+            addButton.disabled = true;
+            addButton.innerHTML = '⏳ Dodawanie...';
+
+            try {
+                const response = await fetch('/api/todo', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify(taskData)
+                });
+
+                console.log('Response status:', response.status);
+
+                if (response.ok) {
+                    const newTask = await response.json();
+                    console.log('Added task response:', newTask);
+                    
+                    // Add to local tasks data
+                    if (!tasks[currentTaskDate]) {
+                        tasks[currentTaskDate] = [];
+                    }
+                    
+                    const taskToAdd = {
+                        id: newTask.id,
+                        task: newTask.task,
+                        isCompleted: newTask.isCompleted,
+                        createdAt: newTask.createdAt
+                    };
+                    
+                    console.log('Adding task to local data for date:', currentTaskDate, 'Task:', taskToAdd);
+                    tasks[currentTaskDate].push(taskToAdd);
+
+                    // Refresh the day's tasks
+                    const tasksContainer = document.getElementById(`tasks-${currentTaskDate}`);
+                    if (tasksContainer) {
+                        tasksContainer.innerHTML = renderTasks(currentTaskDate);
+                        console.log('Refreshed tasks container for date:', currentTaskDate);
+                    }
+
+                    // If saved as template, reload saved activities
+                    if (saveAsTemplate) {
+                        loadSavedActivities();
+                    }
+
+                    closeModal();
+                } else {
+                    let errorMessage = 'Wystąpił błąd podczas dodawania zadania';
+                    
+                    try {
+                        const errorData = await response.json();
+                        console.error('Error response JSON:', errorData);
+                        
+                        if (errorData.message) {
+                            errorMessage = errorData.message;
+                        } else if (errorData.title) {
+                            errorMessage = errorData.title;
+                        }
+                    } catch (parseError) {
+                        const errorText = await response.text();
+                        console.error('Error response text:', errorText);
+                        if (errorText) {
+                            errorMessage = errorText;
+                        }
+                    }
+                    
+                    console.error('Final error message:', errorMessage);
+                    alert(errorMessage);
                 }
+            } catch (error) {
+                console.error('Network error:', error);
+                alert('Błąd połączenia z serwerem. Sprawdź połączenie internetowe.');
+            } finally {
+                // Restore button
+                addButton.disabled = false;
+                addButton.innerHTML = originalText;
             }
         }
 
-        function deleteTask(dateStr, taskId) {
-            if (tasks[dateStr]) {
-                tasks[dateStr] = tasks[dateStr].filter(t => t.id !== taskId);
-                document.getElementById(`tasks-${dateStr}`).innerHTML = renderTasks(dateStr);
+        async function toggleTask(dateStr, taskId) {
+            try {
+                const task = tasks[dateStr]?.find(t => t.id === taskId);
+                if (!task) return;
+
+                const newCompletedStatus = !task.isCompleted;
+                const endpoint = newCompletedStatus ? 'complete' : 'uncomplete';
+                
+                const response = await fetch(`/api/todo/${taskId}/${endpoint}`, {
+                    method: 'PUT'
+                });
+
+                if (response.ok) {
+                    task.isCompleted = newCompletedStatus;
+                    
+                    // Refresh the day's tasks
+                    const tasksContainer = document.getElementById(`tasks-${dateStr}`);
+                    if (tasksContainer) {
+                        tasksContainer.innerHTML = renderTasks(dateStr);
+                    }
+                } else {
+                    alert('Błąd podczas aktualizacji statusu zadania');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Błąd podczas aktualizacji statusu zadania');
             }
         }
 
-        function deleteSavedActivity(activityId) {
-            savedActivities = savedActivities.filter(a => a.id !== activityId);
-            renderSavedActivities();
+        async function deleteTask(dateStr, taskId) {
+            if (!confirm('Czy na pewno chcesz usunąć to zadanie?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/todo/${taskId}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    // Remove from local data
+                    if (tasks[dateStr]) {
+                        tasks[dateStr] = tasks[dateStr].filter(t => t.id !== taskId);
+                    }
+                    
+                    // Refresh the day's tasks
+                    const tasksContainer = document.getElementById(`tasks-${dateStr}`);
+                    if (tasksContainer) {
+                        tasksContainer.innerHTML = renderTasks(dateStr);
+                    }
+                } else {
+                    alert('Błąd podczas usuwania zadania');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Błąd podczas usuwania zadania');
+            }
+        }
+
+        async function deleteSavedActivity(activityId) {
+            if (!confirm('Czy na pewno chcesz usunąć tę zapisaną aktywność?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/todo/saved-activities/${activityId}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    // Remove from local data
+                    savedActivities = savedActivities.filter(a => a.id !== activityId);
+                    renderSavedActivities();
+                } else {
+                    alert('Błąd podczas usuwania zapisanej aktywności');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Błąd podczas usuwania zapisanej aktywności');
+            }
         }
 
         // Close modal when clicking outside
@@ -903,10 +1157,6 @@
                 closeModal();
             }
         });
-
-        // Initialize
-        updateWeekDisplay();
-        generateDaysGrid();
     </script>
 </body>
 </html>
