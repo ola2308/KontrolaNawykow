@@ -37,49 +37,49 @@
     </style>
 </head>
 <body>
-    <div class="main-container">
-        <div class="header-tabs">
-            <div class="tabs-container">
-                <a href="/Diet/Index" class="tab-button">Dieta</a>
-                <a href="/ToDo/Index" class="tab-button">ToDo</a>
-                @if (Model.adminCheck()) {<a href="/Admin/Dashboard" class="tab-button">Admin</a>}
-                <a href="/YourDietician/Index" class="tab-button active">Twój dietetyk</a>
-                <a href="/Fridge/Index" class="tab-button">Lodówka</a>
-                <a href="/Account/Logout" class="tab-button-logout">Wyloguj się</a>
-            </div>
-            <div class="profile-button">
-                <a href="/Profile/Index" class="profile-link">Mój profil <i class="fas fa-user-cog"></i></a>
-            </div>
+    <div class="navigation-header">
+        <div class="nav-tabs">
+            <a href="/Diet" class="nav-tab">Dieta</a>
+            <a href="/ToDo" class="nav-tab">ToDo</a>
+            @if (Model.adminCheck()) {<a href="/Admin/Dashboard" class="nav-tab">Admin</a>}
+			<a href="/YourDietician/Index" class="nav-tab active">Twój dietetyk</a>
+            <a href="/Fridge/Index" class="nav-tab">Lodówka</a>
         </div>
-
-        <div class="content-container">
-            @if (Model.Dieticians.Count == 0)
-            {
-                <p>Na razie nie ma żadnych dietetyków</p>
-            }
-            else
-            {
-                <h3>Lista dietetyków:</h3>
-                foreach (var dietician in Model.Dieticians)
-                {
-                    <div class="dietician-prof">
-                        @(dietician.Imie) @(dietician.Nazwisko)
-                        <br />
-                        Specjalizacja: @(dietician.Specjalizacja)
-                        <br />
-                        Adres email: @(dietician.Email)
-                        <br />
-                        Numer telefonu: @(dietician.Telefon)
-                        <br />
-
-                        <form method="GET">
-                            <input type="hidden" name="ApplyToDietician" value="@(dietician.Id)" />
-                            <button type="submit">Wyślij prośbę</button>
-                        </form>
-                    </div>
-                }
-            }
+        <div class="nav-actions">
+            <a href="/Profile/Index" class="profile-link">👤 Mój profil</a>
+            <form method="post" action="/Account/Logout" style="display: inline;">
+                <button type="submit" class="logout-btn">🚪 Wyloguj</button>
+            </form>
         </div>
+    </div>
+
+    <div class="content-container">
+        @if (Model.Dieticians.Count == 0)
+        {
+            <p>Na razie nie ma żadnych dietetyków</p>
+        }
+        else
+        {
+            <h3>Lista dietetyków:</h3>
+            foreach (var dietician in Model.Dieticians)
+            {
+                <div class="dietician-prof">
+                    @(dietician.Imie) @(dietician.Nazwisko)
+                    <br />
+                    Specjalizacja: @(dietician.Specjalizacja)
+                    <br />
+                    Adres email: @(dietician.Email)
+                    <br />
+                    Numer telefonu: @(dietician.Telefon)
+                    <br />
+
+                    <form method="GET">
+                        <input type="hidden" name="ApplyToDietician" value="@(dietician.Id)" />
+                        <button type="submit" class="action-btn">Wyślij prośbę</button>
+                    </form>
+                </div>
+            }
+        }
     </div>
 </body>
 </html>
