@@ -18,14 +18,16 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">       
 </head>
 <body>
-    <div class="main-container">
-        <div class="header-tabs">
-            <div class="tabs-container">
-                <a href="/Dietician/Index" class="tab-button">Twój profil</a>
-                <a href="/Dietician/Clients" class="tab-button">Twoi klienci</a>
-                <a href="/Dietician/WaitingClients" class="tab-button active">Osoby oczekujące</a>
-                <a href="/Account/Logout" class="tab-button-logout">Wyloguj się</a>
-            </div>
+    <div class="navigation-header">
+        <div class="nav-tabs">
+            <a href="/Dietician/Index" class="nav-tab">Twój profil</a>
+            <a href="/Dietician/Clients" class="nav-tab">Twoi klienci</a>
+            <a href="/Dietician/WaitingClients" class="nav-tab active">Osoby oczekujące</a>
+        </div>
+        <div class="nav-actions">
+            <form method="post" action="/Account/Logout" style="display: inline;">
+                <button type="submit" class="logout-btn">🚪 Wyloguj</button>
+            </form>
         </div>
     </div>
     <div class="content-container">
@@ -70,7 +72,7 @@
 
                     <form method="GET">
                         <input type="hidden" name="AcceptClient" value="@(client.Id)" />
-                        <button type="submit">Zaakceptuj prośbę</button>
+                        <button type="submit" class="action-btn">Zaakceptuj prośbę</button>
                     </form>
 
                 </div>

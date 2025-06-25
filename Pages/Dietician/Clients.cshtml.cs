@@ -17,8 +17,6 @@ namespace KontrolaNawykow.Pages.Dietician
             _context = context;
         }
 
-        public User CurrentUser { get; set; }
-
         public Dietetyk CurrentDietician { get; set; }
 
         public List<User> Clients { get; set; } = new List<User>();

@@ -28,14 +28,16 @@
     </style>
 </head>
 <body>
-    <div class="main-container">
-        <div class="header-tabs">
-            <div class="tabs-container">
-                <a href="/Dietician/Index" class="tab-button active">Twój profil</a>
-                <a href="/Dietician/Clients" class="tab-button">Twoi klienci</a>
-                <a href="/Dietician/WaitingClients" class="tab-button">Osoby oczekujące</a>
-                <a href="/Account/Logout" class="tab-button-logout">Wyloguj się</a>
-            </div>
+    <div class="navigation-header">
+        <div class="nav-tabs">
+            <a href="/Dietician/Index" class="nav-tab active">Twój profil</a>
+            <a href="/Dietician/Clients" class="nav-tab">Twoi klienci</a>
+            <a href="/Dietician/WaitingClients" class="nav-tab">Osoby oczekujące</a>
+        </div>
+        <div class="nav-actions">
+            <form method="post" action="/Account/Logout" style="display: inline;">
+                <button type="submit" class="logout-btn">🚪 Wyloguj</button>
+            </form>
         </div>
     </div>
     <div class="content-container">

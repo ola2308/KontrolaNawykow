@@ -18,14 +18,16 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
-    <div class="main-container">
-        <div class="header-tabs">
-            <div class="tabs-container">
-                <a href="/Dietician/Index" class="tab-button">Twój profil</a>
-                <a href="/Dietician/Clients" class="tab-button active">Twoi klienci</a>
-                <a href="/Dietician/WaitingClients" class="tab-button">Osoby oczekujące</a>
-                <a href="/Account/Logout" class="tab-button-logout">Wyloguj się</a>
-            </div>
+    <div class="navigation-header">
+        <div class="nav-tabs">
+            <a href="/Dietician/Index" class="nav-tab">Twój profil</a>
+            <a href="/Dietician/Clients" class="nav-tab active">Twoi klienci</a>
+            <a href="/Dietician/WaitingClients" class="nav-tab">Osoby oczekujące</a>
+        </div>
+        <div class="nav-actions">
+            <form method="post" action="/Account/Logout" style="display: inline;">
+                <button type="submit" class="logout-btn">🚪 Wyloguj</button>
+            </form>
         </div>
     </div>
     <div class="content-container">
@@ -66,6 +68,16 @@
                     Liczba gram spożywanych węglowodanów dziennie: @(client.CustomCarbsGrams)
                     <br />
                     Liczba gram spożywanych tłuszczów dziennie: @(client.CustomFatGrams)
+                    <br />
+                    @* <form method="GET">
+                        <input type="hidden" name="CheckSchedule" value="@(client.Id)" />
+                        <button type="submit">Sprawdz harmonogram klienta</button>
+                    </form> *@
+                    <br />
+                    <br />
+                    <a href="/Dietician/ClientSchedule?CheckSchedule=@(client.Id)" class="action-btn">
+                        Sprawdz harmonogram klienta    
+                    </a>
                     <br />
                 </div>
             }
