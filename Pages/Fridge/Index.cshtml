@@ -12,13 +12,13 @@
         <div class="nav-tabs">
             <a href="/Diet" class="nav-tab">Dieta</a>
             <a href="/ToDo" class="nav-tab">ToDo</a>
-            <a href="/Admin" class="nav-tab">Admin</a>
+            @if (Model.adminCheck()) {<a href="/Admin/Dashboard" class="nav-tab">Admin</a>}
             <a href="/YourDietician/Index" class="nav-tab">Twój dietetyk</a>
             <a href="/Fridge/Index" class="nav-tab active">Lodówka</a>
         </div>
         <div class="nav-actions">
             <form method="post" action="/Account/Logout" style="display: inline;">
-                <button type="submit" class="logout-btn">🚪 Wyloguj</button>
+                <a href="/Account/Logout" class="tab-button-logout">🚪 Wyloguj</a>
             </form>
         </div>
     </div>

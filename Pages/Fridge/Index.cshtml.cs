@@ -35,14 +35,18 @@ namespace KontrolaNawykow.Pages.Fridge
 
         public List<ShoppingList> ShoppingLists { get; set; } = new();
 
-        public async Task OnGetAsync()
+        public async Task<IActionResult> OnGetAsync()
         {
             await LoadDataAsync();
+            var userId = GetCurrentUserId();
+            if (userId == -1) return RedirectToPage("/Account/Login");
+            return Page();
         }
 
         public async Task<IActionResult> OnPostAddAsync()
         {
             var userId = GetCurrentUserId();
+            if (userId == -1) return RedirectToPage("/Account/Login");
             Console.WriteLine($"Dodawanie: {Name}, {Amount}, {Unit}");
 
             var item = new FridgeItem
@@ -104,8 +108,16 @@ namespace KontrolaNawykow.Pages.Fridge
             return RedirectToPage();
         }
 
+        public bool adminCheck()
+        {
+            var currentId = GetCurrentUserId();
+            var CurrentAdmin = _context.Admins.Where(a => a.UzytkownikId == currentId);
+            return CurrentAdmin.Any();
+        }
+
         private int GetCurrentUserId()
         {
+            if (User.FindFirst(ClaimTypes.NameIdentifier) == null) return -1;
             return int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
         }
     }
