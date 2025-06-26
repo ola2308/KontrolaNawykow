@@ -26,6 +26,21 @@ namespace KontrolaNawykow.Pages.Admin
         [BindProperty]
         public String Description { get; set; }
 
+        [BindProperty(SupportsGet = true)]
+        public bool? Nowe { get; set; }
+
+        [BindProperty(SupportsGet = true)]
+        public bool? WTrakcie { get; set; }
+
+        [BindProperty(SupportsGet = true)]
+        public bool? Zamkniete { get; set; }
+
+        [BindProperty(SupportsGet = true)]
+        public bool? Odrzucone { get; set; }
+
+        [BindProperty(SupportsGet = true)]
+        public int FilterStatus { get; set; } = 0;
+
         public int PageCount { get; set; }
 
         public User CurrentUser { get; set; }
@@ -86,12 +101,24 @@ namespace KontrolaNawykow.Pages.Admin
                     return RedirectToPage("/Admin/Reports");
                 }
 
-                var records = await _context.Blokady.CountAsync();
+                if(FilterStatus == 0)
+                {
+                    Nowe = true;
+                    WTrakcie = true;
+                }
+                
+                var zgloszenia = _context.Zgloszenia.Where(b => (Nowe.HasValue && b.Status == StatusZgloszenia.Nowe) ||
+                (WTrakcie.HasValue && b.Status == StatusZgloszenia.WTrakcie) ||
+                (Zamkniete.HasValue && b.Status == StatusZgloszenia.Zamkniete) ||
+                (Odrzucone.HasValue && b.Status == StatusZgloszenia.Odrzucone));
+
+                var records = await zgloszenia.CountAsync();
                 if (records > 0) PageCount = --records / 10 + 1;
 
                 if (PageNumber < 1) PageNumber = 1;
-                reports = await (Search == null ? _context.Zgloszenia.Include(r => r.Zglaszajacy).Include(r => r.Zglaszany).Skip((PageNumber - 1) * 10).Take(10).ToListAsync()
-                     : _context.Zgloszenia.Include(r => r.Zglaszajacy).Include(r => r.Zglaszany).Where(r => r.Zglaszajacy.Username == Search || r.Zglaszany.Username == Search).Skip((PageNumber - 1) * 10).Take(10).ToListAsync());
+                reports = await (Search == null ? zgloszenia.Include(r => r.Zglaszajacy).Include(r => r.Zglaszany).Skip((PageNumber - 1) * 10).Take(10).ToListAsync()
+                     : zgloszenia.Include(r => r.Zglaszajacy).Include(r => r.Zglaszany).Where(r => r.Zglaszajacy.Username == Search || r.Zglaszany.Username == Search).Skip((PageNumber - 1) * 10).Take(10).ToListAsync());
+
 
                 if (View != null)
                 {
@@ -144,6 +171,8 @@ namespace KontrolaNawykow.Pages.Admin
                 var adminId = CurrentAdmin.First().Id;
 
                 Zgloszenie report = await(_context.Zgloszenia.Include(z => z.Zglaszajacy).Where(z => z.Id == View).SingleAsync());
+
+                if (report.Status == StatusZgloszenia.Zamkniete || report.Status == StatusZgloszenia.Odrzucone) return Redirect("Reports");
 
                 Blokada ban = new Blokada
                 {

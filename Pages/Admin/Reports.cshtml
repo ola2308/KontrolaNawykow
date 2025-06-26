@@ -47,6 +47,12 @@
             <form>
                 <label>Użytkownik:</label>
                 <input type="text" name="Search" />
+                <label>Status zgłoszenia: </label>
+                <label>Nowe</label><input type="checkbox" name="Nowe" value="true" @(Model.Nowe.HasValue ? "checked=\"checked\"" : "") />
+                <label>W trakcie</label><input type="checkbox" name="WTrakcie" value="true" @(Model.WTrakcie.HasValue ? "checked=\"checked\"" : "") />
+                <label>Zamknięte</label><input type="checkbox" name="Zamkniete" value="true" @(Model.Zamkniete.HasValue ? "checked=\"checked\"" : "") />
+                <label>Odrzucone</label><input type="checkbox" name="Odrzucone" value="true" @(Model.Odrzucone.HasValue ? "checked=\"checked\"" : "") />
+                <input type="hidden" name="filterStatus" value="1" />
                 <input type="submit" value="Szukaj" />
             </form>
             @if (!Model.reports.Any())
@@ -90,19 +96,21 @@
                     <h1>Szczegóły zgłoszenia #@Model.View</h1>
                     @if (Model.displayedReport != null)
                     {
-                        <p><b>Blokujący/a:</b> @Model.displayedReport.Zglaszajacy.Username</p>
-                        <p><b>Zablokowany/a:</b> @Model.displayedReport.Zglaszany.Username</p>
+                        <p><b>Zgłaszający/a:</b> @Model.displayedReport.Zglaszajacy.Username</p>
+                        <p><b>Zgłaszany/a:</b> @Model.displayedReport.Zglaszany.Username</p>
                         <p><b>Powód zgłoszenia:</b> @Model.displayedReport.Powod</p>
                         <button onclick="confirmDelete(@Model.View)">Usuń</button>
-                        <button onclick="ShowDeleteForm()">"Nałóż blokadę(coming soon!)"</button>
+                        @if (Model.displayedReport.Status == KontrolaNawykow.Models.StatusZgloszenia.Nowe || Model.displayedReport.Status == KontrolaNawykow.Models.StatusZgloszenia.WTrakcie) {
+                        <button onclick="ShowDeleteForm()">Nałóż blokadę</button>
                         <form method="post" action="/Admin/Reports?View=@Model.View" id="DeleteForm" style="display:none;">
                             @Html.AntiForgeryToken()
-                            <label for="number">Czas trwania blokady</label>
+                            <label for="number">Czas trwania blokady(dni)</label>
                             <input type="number" id="BanDuration" name="Duration"/>
                             <label for="Description">Opis blokady</label>
                             <input type="text" name="Description" />
                             <input type="submit" value="Potwierdź" />
                         </form>
+                        }
                     }
                     else
                     {
