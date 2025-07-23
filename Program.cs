@@ -180,3 +180,5 @@ Console.WriteLine("- /debug/routes (Debug - lista wszystkich tras)");
 Console.WriteLine("=====================================");
 
 app.Run();
+
+public partial class Program { };
