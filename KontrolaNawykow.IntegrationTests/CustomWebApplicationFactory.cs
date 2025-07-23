@@ -1,10 +1,11 @@
-﻿using KontrolaNawykow;
-using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
+﻿using System.Linq;
+using KontrolaNawykow;
 using KontrolaNawykow.Models;
 using Microsoft.AspNetCore.Hosting;
-using System.Linq;
+using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.Extensions.DependencyInjection;
 
 public class CustomWebApplicationFactory : WebApplicationFactory<Program>
 {
@@ -12,10 +13,9 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
     {
         builder.ConfigureServices(services =>
         {
-            var descriptor = services.SingleOrDefault(
-                d => d.ServiceType == typeof(DbContextOptions<ApplicationDbContext>));
-            if (descriptor != null)
-                services.Remove(descriptor);
+            services.Remove(
+                services.SingleOrDefault(d => d.ServiceType == typeof(IDbContextOptionsConfiguration<ApplicationDbContext>))
+            );
 
             services.AddDbContext<ApplicationDbContext>(options =>
             {
