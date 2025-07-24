@@ -35,6 +35,8 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword("Test123!")
             });
             db.SaveChanges();
+
+
         });
     }
 }

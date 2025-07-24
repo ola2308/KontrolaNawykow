@@ -14,11 +14,27 @@ public class LoginTests : IClassFixture<CustomWebApplicationFactory>
         _client = factory.CreateClient();
     }
 
+
+    [Fact]
+    public async Task Login_WithoutToken_ShouldBeBadRequest()
+    {
+        var formData = new FormUrlEncodedContent(new[]
+        {
+            new KeyValuePair<string, string>("Username", "testuser"),
+            new KeyValuePair<string, string>("Password", "Test123!")
+        });
+
+        var response = await _client.PostAsync("/Account/Login", formData);
+
+        Assert.Equal(System.Net.HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
     [Fact]
     public async Task Login_WithValidCredentials_ShouldRedirect()
     {
         var formData = new FormUrlEncodedContent(new[]
         {
+            new KeyValuePair<string, string>("__RequestVerificationToken", "???"),
             new KeyValuePair<string, string>("Username", "testuser"),
             new KeyValuePair<string, string>("Password", "Test123!")
         });
@@ -34,6 +50,7 @@ public class LoginTests : IClassFixture<CustomWebApplicationFactory>
     {
         var formData = new FormUrlEncodedContent(new[]
         {
+            new KeyValuePair<string, string>("__RequestVerificationToken", "???"),
             new KeyValuePair<string, string>("Username", "testuser"),
             new KeyValuePair<string, string>("Password", "WrongPass")
         });
