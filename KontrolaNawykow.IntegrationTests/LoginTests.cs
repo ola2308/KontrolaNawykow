@@ -68,7 +68,7 @@ public class LoginTests : IClassFixture<CustomWebApplicationFactory>
         var response = await _client.PostAsync("/Account/Login", formData);
 
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
-        Assert.Equal("/Diet/Index", response.Headers.Location.ToString());
+        Assert.Equal(new Uri("/Diet/Index"), response.Headers.Location);
     }
 
     [Fact]
@@ -98,9 +98,9 @@ public class LoginTests : IClassFixture<CustomWebApplicationFactory>
         value = value.Substring(7, value.Length - 11);
         //Wydobycie tokenu - koniec
 
-        var formData = new FormUrlEncodedContent(new[]
+        var formData = new FormUrlEncodedContent(new[] 
         {
-            new KeyValuePair<string, string>("__RequestVerificationToken", "???"),
+            new KeyValuePair<string, string>("__RequestVerificationToken", value),
             new KeyValuePair<string, string>("Username", "testuser"),
             new KeyValuePair<string, string>("Password", "WrongPass")
         });
@@ -109,6 +109,7 @@ public class LoginTests : IClassFixture<CustomWebApplicationFactory>
         var content = await response.Content.ReadAsStringAsync();
 
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
-        Assert.Contains("Nieprawidłowa nazwa użytkownika lub hasło", content);
+
+        Assert.Contains("Nieprawid&#x142;owa nazwa u&#x17C;ytkownika lub has&#x142;o", content);
     }
 }
