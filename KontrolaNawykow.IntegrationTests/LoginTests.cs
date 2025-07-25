@@ -2,11 +2,12 @@
 
 using System.Collections.Generic;
 using System.Net.Http;
-using System.Net.Http.Json;
 using System.Runtime.InteropServices.JavaScript;
 using System.Threading.Tasks;
 using System.Text.RegularExpressions;
+using System.IO;
 using Xunit;
+using Xunit.Sdk;
 
 public class LoginTests : IClassFixture<CustomWebApplicationFactory>
 {
@@ -67,8 +68,17 @@ public class LoginTests : IClassFixture<CustomWebApplicationFactory>
 
         var response = await _client.PostAsync("/Account/Login", formData);
 
+        var responseString = await response.Content.ReadAsStringAsync();
+
+        //using (StreamWriter outputFile = new StreamWriter(Path.Combine("C:\\source\\Projekt TAB\\KontrolaNawykow.IntegrationTests", "site.html")))
+        //{
+
+        //    outputFile.WriteLine(response.Headers.ToString());
+        //    outputFile.WriteLine(responseString);
+        //}
+
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
-        Assert.Equal(new Uri("/Diet/Index"), response.Headers.Location);
+        Assert.DoesNotContain("<title>Logowanie - KontrolaNawyków</title>", responseString);
     }
 
     [Fact]
@@ -109,7 +119,7 @@ public class LoginTests : IClassFixture<CustomWebApplicationFactory>
         var content = await response.Content.ReadAsStringAsync();
 
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
-
+        Assert.Contains("<title>Logowanie - KontrolaNawyków</title>", content);
         Assert.Contains("Nieprawid&#x142;owa nazwa u&#x17C;ytkownika lub has&#x142;o", content);
     }
 }

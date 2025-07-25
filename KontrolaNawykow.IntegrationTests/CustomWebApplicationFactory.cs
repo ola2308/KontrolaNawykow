@@ -28,12 +28,13 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
             db.Database.EnsureCreated();
 
             // Dodaj testowego użytkownika
-            db.Users.Add(new User
+            db.Add(new User
             {
                 Username = "testuser",
                 Email = "test@example.com",
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword("Test123!")
             });
+
             db.SaveChanges();
 
 
