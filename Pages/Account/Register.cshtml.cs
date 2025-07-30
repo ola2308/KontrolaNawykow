@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace KontrolaNawykow.Pages.Account
 {
@@ -90,7 +91,8 @@ namespace KontrolaNawykow.Pages.Account
                     foreach (var modelError in ModelState.Values.SelectMany(v => v.Errors))
                     {
                         Console.WriteLine($"Blad walidacji: {modelError.ErrorMessage}");
-                    }
+                        ErrorMessage = modelError.ErrorMessage;
+                    }                    
                     return Page();
                 }
 

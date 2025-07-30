@@ -1,11 +1,12 @@
 ﻿namespace KontrolaNawykow.IntegrationTests;
 
 using System.Collections.Generic;
+using System.IO;
 using System.Net.Http;
 using System.Runtime.InteropServices.JavaScript;
-using System.Threading.Tasks;
 using System.Text.RegularExpressions;
-using System.IO;
+using System.Threading.Tasks;
+using NuGet.Common;
 using Xunit;
 using Xunit.Sdk;
 
@@ -36,32 +37,11 @@ public class LoginTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task Login_WithValidCredentials_ShouldRedirect()
     {
-        //Wydobycie tokenu
-        var formPage = await _client.GetAsync("/Account/Login");
-
-        Assert.Equal(System.Net.HttpStatusCode.OK, formPage.StatusCode);
-
-        var form = await formPage.Content.ReadAsStringAsync();
-
-        Regex tokenSearch = new Regex("<input name=\"__RequestVerificationToken\".*\\/>");
-
-        var tokenField = tokenSearch.Matches(form).FirstOrDefault();
-        Assert.NotNull(tokenField);
-        
-        var token = tokenField.Value;
-
-        Regex valueSearch = new Regex("value=\".*\" />");
-
-        var valueField = valueSearch.Matches(token).FirstOrDefault();
-        Assert.NotNull(valueField);
-
-        var value = valueField.Value;
-        value = value.Substring(7, value.Length - 11);
-        //Wydobycie tokenu - koniec
+        string token = await GetToken("/Account/Login");
 
         var formData = new FormUrlEncodedContent(new[]
         {
-            new KeyValuePair<string, string>("__RequestVerificationToken", value),
+            new KeyValuePair<string, string>("__RequestVerificationToken", token),
             new KeyValuePair<string, string>("Username", "testuser"),
             new KeyValuePair<string, string>("Password", "Test123!")
         });
@@ -69,13 +49,6 @@ public class LoginTests : IClassFixture<CustomWebApplicationFactory>
         var response = await _client.PostAsync("/Account/Login", formData);
 
         var responseString = await response.Content.ReadAsStringAsync();
-
-        //using (StreamWriter outputFile = new StreamWriter(Path.Combine("C:\\source\\Projekt TAB\\KontrolaNawykow.IntegrationTests", "site.html")))
-        //{
-
-        //    outputFile.WriteLine(response.Headers.ToString());
-        //    outputFile.WriteLine(responseString);
-        //}
 
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
         Assert.DoesNotContain("<title>Logowanie - KontrolaNawyków</title>", responseString);
@@ -85,32 +58,11 @@ public class LoginTests : IClassFixture<CustomWebApplicationFactory>
     public async Task Login_WithInvalidCredentials_ShouldShowError()
     {
 
-        //Wydobycie tokenu
-        var formPage = await _client.GetAsync("/Account/Login");
-
-        Assert.Equal(System.Net.HttpStatusCode.OK, formPage.StatusCode);
-
-        var form = await formPage.Content.ReadAsStringAsync();
-
-        Regex tokenSearch = new Regex("<input name=\"__RequestVerificationToken\".*\\/>");
-
-        var tokenField = tokenSearch.Matches(form).FirstOrDefault();
-        Assert.NotNull(tokenField);
-
-        var token = tokenField.Value;
-
-        Regex valueSearch = new Regex("value=\".*\" />");
-
-        var valueField = valueSearch.Matches(token).FirstOrDefault();
-        Assert.NotNull(valueField);
-
-        var value = valueField.Value;
-        value = value.Substring(7, value.Length - 11);
-        //Wydobycie tokenu - koniec
+        string token = await GetToken("/Account/Login");
 
         var formData = new FormUrlEncodedContent(new[] 
         {
-            new KeyValuePair<string, string>("__RequestVerificationToken", value),
+            new KeyValuePair<string, string>("__RequestVerificationToken", token),
             new KeyValuePair<string, string>("Username", "testuser"),
             new KeyValuePair<string, string>("Password", "WrongPass")
         });
@@ -121,5 +73,115 @@ public class LoginTests : IClassFixture<CustomWebApplicationFactory>
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
         Assert.Contains("<title>Logowanie - KontrolaNawyków</title>", content);
         Assert.Contains("Nieprawid&#x142;owa nazwa u&#x17C;ytkownika lub has&#x142;o", content);
+    }
+
+    [Fact]
+    public async Task Register_WithoutToken_ShouldBeBadRequest()
+    {
+        string token = await GetToken("/Account/Register");
+
+        var formData = new FormUrlEncodedContent(new[]
+        {
+            new KeyValuePair<string, string>("Username", "testuser"),
+            new KeyValuePair<string, string>("Password", "Test123!"),
+            new KeyValuePair<string, string>("ConfirmPassword", "Test123!"),
+            new KeyValuePair<string, string>("Email", "Test@sample.com"),
+        });
+
+        var response = await _client.PostAsync("/Account/Register", formData);
+
+        Assert.Equal(System.Net.HttpStatusCode.BadRequest, response.StatusCode);
+
+    }
+
+    [Fact]
+    public async Task Register_Existing_ShouldReturnError()
+    {
+        string token = await GetToken("/Account/Register");
+
+        var formData = new FormUrlEncodedContent(new[]
+        {
+            new KeyValuePair<string, string>("Username", "testuser"),
+            new KeyValuePair<string, string>("Password", "Test123!"),
+            new KeyValuePair<string, string>("ConfirmPassword", "Test123!"),
+            new KeyValuePair<string, string>("Email", "Test@sample.com"),
+            new KeyValuePair<string, string>("__RequestVerificationToken", token),
+        });
+
+        var response = await _client.PostAsync("/Account/Register", formData);
+        var content = await response.Content.ReadAsStringAsync();
+
+        Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
+        Assert.Contains("<title>Rejestracja - KontrolaNawyków</title>", content);
+        Assert.Contains("Uzytkownik o takiej nazwie ju&#x17C; istnieje.", content);
+    }
+
+    [Fact]
+    public async Task Register_BadConfirm_ShouldReturnError()
+    {
+        string token = await GetToken("/Account/Register");
+
+        var formData = new FormUrlEncodedContent(new[]
+        {
+            new KeyValuePair<string, string>("Username", "baduser"),
+            new KeyValuePair<string, string>("Password", "Test123!"),
+            new KeyValuePair<string, string>("ConfirmPassword", "Innehaslo"),
+            new KeyValuePair<string, string>("Email", "Test@sample.com"),
+            new KeyValuePair<string, string>("__RequestVerificationToken", token),
+        });
+
+        var response = await _client.PostAsync("/Account/Register", formData);
+        var content = await response.Content.ReadAsStringAsync();
+
+        Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
+        Assert.Contains("<title>Rejestracja - KontrolaNawyków</title>", content);
+        Assert.Contains("Hasla nie s&#x105; identyczne", content);
+    }
+
+    [Fact]
+    public async Task Register_NewAccount_ShouldRedirect()
+    {
+        string token = await GetToken("/Account/Register");
+
+        var formData = new FormUrlEncodedContent(new[]
+        {
+            new KeyValuePair<string, string>("Username", "newuser"),
+            new KeyValuePair<string, string>("Password", "Passw0rd!"),
+            new KeyValuePair<string, string>("ConfirmPassword", "Passw0rd!"),
+            new KeyValuePair<string, string>("Email", "Test@sample.com"),
+            new KeyValuePair<string, string>("__RequestVerificationToken", token),
+        });
+
+        var response = await _client.PostAsync("/Account/Register", formData);
+        var content = await response.Content.ReadAsStringAsync();
+
+        Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
+        Assert.Contains("<title>Twój profil - KontrolaNawyków</title>", content);
+        Assert.Contains("Cześć, newuser!", content);
+    }
+
+
+    private async Task<string> GetToken(string path)
+    {
+        var formPage = await _client.GetAsync(path);
+
+        Assert.Equal(System.Net.HttpStatusCode.OK, formPage.StatusCode);
+
+        var form = await formPage.Content.ReadAsStringAsync();
+
+        Regex tokenSearch = new Regex("<input name=\"__RequestVerificationToken\".*\\/>");
+
+        var tokenField = tokenSearch.Matches(form).FirstOrDefault();
+        Assert.NotNull(tokenField);
+
+        var token = tokenField.Value;
+
+        Regex valueSearch = new Regex("value=\".*\" />");
+
+        var valueField = valueSearch.Matches(token).FirstOrDefault();
+        Assert.NotNull(valueField);
+
+        var value = valueField.Value;
+        return value.Substring(7, value.Length - 11);
     }
 }
