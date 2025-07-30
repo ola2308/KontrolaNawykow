@@ -35,6 +35,21 @@ public class LoginTests : IClassFixture<CustomWebApplicationFactory>
     }
 
     [Fact]
+    public async Task Login_WithInvalidToken_ShouldBeBadRequest()
+    {
+        var formData = new FormUrlEncodedContent(new[]
+        {
+            new KeyValuePair<string, string>("Username", "testuser"),
+            new KeyValuePair<string, string>("Password", "Test123!"),
+            new KeyValuePair<string, string>("__RequestVerificationToken", "BadToken!2#@43%4^5dE%gb"),
+        });
+
+        var response = await _client.PostAsync("/Account/Login", formData);
+
+        Assert.Equal(System.Net.HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
     public async Task Login_WithValidCredentials_ShouldRedirect()
     {
         string token = await GetToken("/Account/Login");
@@ -86,6 +101,27 @@ public class LoginTests : IClassFixture<CustomWebApplicationFactory>
             new KeyValuePair<string, string>("Password", "Test123!"),
             new KeyValuePair<string, string>("ConfirmPassword", "Test123!"),
             new KeyValuePair<string, string>("Email", "Test@sample.com"),
+        });
+
+        var response = await _client.PostAsync("/Account/Register", formData);
+
+        Assert.Equal(System.Net.HttpStatusCode.BadRequest, response.StatusCode);
+
+    }
+
+
+    [Fact]
+    public async Task Register_WithInvalidToken_ShouldBeBadRequest()
+    {
+        string token = await GetToken("/Account/Register");
+
+        var formData = new FormUrlEncodedContent(new[]
+        {
+            new KeyValuePair<string, string>("Username", "testuser"),
+            new KeyValuePair<string, string>("Password", "Test123!"),
+            new KeyValuePair<string, string>("ConfirmPassword", "Test123!"),
+            new KeyValuePair<string, string>("Email", "Test@sample.com"),
+            new KeyValuePair<string, string>("__RequestVerificationToken", "BadToken!2#@43%4^5dE%gb"),
         });
 
         var response = await _client.PostAsync("/Account/Register", formData);
